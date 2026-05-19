@@ -1,0 +1,60 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Generate Sample Data</title>
+  <style>
+    body { font-family: system-ui, sans-serif; display: flex; align-items: center;
+           justify-content: center; height: 100vh; margin: 0; background: #F4F6FB; }
+    .card { background: #fff; border-radius: 16px; padding: 40px 48px; text-align: center;
+            box-shadow: 0 4px 24px rgba(0,0,0,.08); max-width: 420px; }
+    h1 { font-size: 1.25rem; margin-bottom: 8px; }
+    p  { color: #6B7280; font-size: 0.875rem; margin-bottom: 24px; }
+    button { background: #4F6EF7; color: #fff; border: none; padding: 12px 28px;
+             border-radius: 8px; font-size: 0.9rem; font-weight: 600; cursor: pointer; }
+    button:hover { background: #3B55D9; }
+    .note { margin-top: 16px; font-size: 0.75rem; color: #9CA3AF; }
+  </style>
+</head>
+<body>
+  <div class="card">
+    <h1>Generate Sample Data</h1>
+    <p>Creates <strong>assets/sample-data.xlsx</strong> with 60 realistic employee exit records spanning 2021–2024.</p>
+    <button id="btn">Download sample-data.xlsx</button>
+    <p class="note">Open this file once to download the sample, then use it in the main app.</p>
+  </div>
+
+  <script src="https://cdn.sheetjs.com/xlsx-latest/package/dist/xlsx.full.min.js"></script>
+  <script>
+    document.getElementById('btn').addEventListener('click', () => {
+      const REASONS      = ['Resignation','Resignation','Resignation','Termination','Termination','Retirement','Redundancy','End of Contract'];
+      const DEPARTMENTS  = ['Engineering','HR','Finance','Operations','Sales','Marketing','IT','Legal','Product','Customer Support'];
+      const FIRST_NAMES  = ['Juan','Maria','Pedro','Ana','Carlo','Lea','Mark','Rosa','James','Alma','Miguel','Sofia','Ramon','Liza','Eric','Nina','Kevin','Tanya','Felix','Claire'];
+      const LAST_NAMES   = ['dela Cruz','Santos','Reyes','Lim','Mendoza','Garcia','Torres','Flores','Rivera','Lopez','Gonzales','Ramos','Bautista','Castillo','Diaz','Morales','Cruz','Perez','Hernandez','Aquino'];
+
+      function rnd(arr) { return arr[Math.floor(Math.random() * arr.length)]; }
+      function pad(n) { return String(n).padStart(2, '0'); }
+
+      const rows = [['Name','Department','Exit Date','Reason']];
+
+      for (let i = 0; i < 60; i++) {
+        const name  = `${rnd(FIRST_NAMES)} ${rnd(LAST_NAMES)}`;
+        const dept  = rnd(DEPARTMENTS);
+        const year  = 2021 + Math.floor(Math.random() * 4);   // 2021-2024
+        const month = 1   + Math.floor(Math.random() * 12);
+        const day   = 1   + Math.floor(Math.random() * 28);
+        const date  = `${year}-${pad(month)}-${pad(day)}`;
+        const reason = rnd(REASONS);
+        rows.push([name, dept, date, reason]);
+      }
+
+      const ws = XLSX.utils.aoa_to_sheet(rows);
+      ws['!cols'] = [{ wch: 24 }, { wch: 18 }, { wch: 14 }, { wch: 20 }];
+
+      const wb = XLSX.utils.book_new();
+      XLSX.utils.book_append_sheet(wb, ws, 'Employee Exits');
+      XLSX.writeFile(wb, 'sample-data.xlsx');
+    });
+  </script>
+</body>
+</html>
