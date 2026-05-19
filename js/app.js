@@ -103,6 +103,11 @@
     $btnExportPDF.addEventListener('click',   handleExportPDF);
   }
 
+  // Yields to the browser for one paint frame
+  function nextFrame() {
+    return new Promise(resolve => setTimeout(resolve, 0));
+  }
+
   // ── File handling ─────────────────────────────────────────────────────────
   async function handleFileSelect(file) {
     if (!/\.(xlsx|xls)$/i.test(file.name)) {
@@ -110,16 +115,20 @@
       return;
     }
 
-    showLoading(true, 'Parsing file…');
+    showLoading(true, 'Reading file…');
+    await nextFrame(); // let overlay paint before FileReader starts
 
     try {
       const { records, warnings } = await Parser.parse(file);
+
+      showLoading(true, 'Building report…');
+      await nextFrame(); // let text update paint before sync chart/analytics work
 
       state.records  = records;
       state.fileName = file.name;
 
       state.analyticsResult          = Analytics.compute(records, state.headcount);
-      state.analyticsResult._records = records; // forward records to PDF exporter
+      state.analyticsResult._records = records;
 
       Charts.render(state.analyticsResult);
       updateStatCards(state.analyticsResult);
@@ -242,11 +251,21 @@
   }
 
   // ── Loading overlay ───────────────────────────────────────────────────────
+  let _loadingTimer = null;
+
   function showLoading(visible, text) {
+    if (!$loadingOverlay) return;
     if (visible) {
       if (text && $loadingText) $loadingText.textContent = text;
       $loadingOverlay.classList.remove('hidden');
+      // Safety net: dismiss after 30 s in case something hangs
+      clearTimeout(_loadingTimer);
+      _loadingTimer = setTimeout(() => {
+        $loadingOverlay.classList.add('hidden');
+        showToast('Processing took too long. Please try again.', 'error');
+      }, 30000);
     } else {
+      clearTimeout(_loadingTimer);
       $loadingOverlay.classList.add('hidden');
     }
   }

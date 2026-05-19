@@ -63,14 +63,42 @@
       </div>
 
       <div class="upload-section__format">
-        <p class="upload-section__format-title">Expected columns</p>
-        <div class="format-tags">
-          <span class="format-tag">Name</span>
-          <span class="format-tag">Department</span>
-          <span class="format-tag">Exit Date</span>
-          <span class="format-tag format-tag--required">Reason</span>
+        <p class="upload-section__format-title">Required columns</p>
+        <div class="format-grid">
+          <div class="format-item">
+            <span class="format-item__field">Employee</span>
+            <span class="format-tag">Last Name + First Name + Middle Name</span>
+            <span class="format-item__or">or</span>
+            <span class="format-tag">Name</span>
+          </div>
+          <div class="format-item">
+            <span class="format-item__field">Department</span>
+            <span class="format-tag">Department</span>
+          </div>
+          <div class="format-item">
+            <span class="format-item__field">Date Hired</span>
+            <span class="format-tag">Date Hired</span>
+            <span class="format-item__or">(optional)</span>
+          </div>
+          <div class="format-item">
+            <span class="format-item__field">Exit Date</span>
+            <span class="format-tag">Date of Last Day</span>
+            <span class="format-item__or">or</span>
+            <span class="format-tag">Exit Date</span>
+          </div>
+          <div class="format-item">
+            <span class="format-item__field">Reason</span>
+            <span class="format-tag format-tag--required">Last Update</span>
+            <span class="format-item__or">or</span>
+            <span class="format-tag format-tag--required">Reason</span>
+          </div>
+          <div class="format-item">
+            <span class="format-item__field">Notes</span>
+            <span class="format-tag">Remarks</span>
+            <span class="format-item__or">(optional)</span>
+          </div>
         </div>
-        <p class="upload-section__format-hint">Accepted reasons: Resignation · Termination · Retirement · Redundancy · End of Contract</p>
+        <p class="upload-section__format-hint">Accepted reasons: Resignation · Termination · AWOL · Retirement · Redundancy · End of Contract</p>
       </div>
     </section>
 
@@ -103,7 +131,12 @@
             </svg>
           </div>
           <div class="stat-card__body">
-            <span class="stat-card__label">Total Exits</span>
+            <span class="stat-card__label">
+              Total Exits
+              <span class="tooltip" data-tooltip="Count of all employee separation records found in the uploaded file." aria-label="Total Exits info">
+                <svg xmlns="http://www.w3.org/2000/svg" width="13" height="13" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+              </span>
+            </span>
             <span class="stat-card__value" id="val-total">—</span>
           </div>
         </div>
@@ -115,7 +148,12 @@
             </svg>
           </div>
           <div class="stat-card__body">
-            <span class="stat-card__label">Peak Month</span>
+            <span class="stat-card__label">
+              Peak Month
+              <span class="tooltip" data-tooltip="The calendar month with the highest number of exits. The percentage shows its share of all exits." aria-label="Peak Month info">
+                <svg xmlns="http://www.w3.org/2000/svg" width="13" height="13" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+              </span>
+            </span>
             <span class="stat-card__value" id="val-peak-month">—</span>
             <span class="stat-card__sub" id="val-peak-detail"></span>
           </div>
@@ -128,7 +166,12 @@
             </svg>
           </div>
           <div class="stat-card__body">
-            <span class="stat-card__label">Avg Attrition Rate</span>
+            <span class="stat-card__label">
+              Avg Attrition Rate
+              <span class="tooltip" data-tooltip="Average exits per year across all years in the data. Enter a total headcount and click Apply to convert this into a % of your workforce." aria-label="Avg Attrition Rate info">
+                <svg xmlns="http://www.w3.org/2000/svg" width="13" height="13" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+              </span>
+            </span>
             <span class="stat-card__value" id="val-avg-rate">—</span>
             <span class="stat-card__sub" id="val-avg-rate-sub"></span>
           </div>
@@ -164,7 +207,7 @@
             <canvas id="chart-bar"></canvas>
             <div class="chart-empty hidden" id="chart-bar-empty">
               <svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.5"><path stroke-linecap="round" stroke-linejoin="round" d="M3 13.125C3 12.504 3.504 12 4.125 12h2.25c.621 0 1.125.504 1.125 1.125v6.75C7.5 20.496 6.996 21 6.375 21h-2.25A1.125 1.125 0 013 19.875v-6.75zM9.75 8.625c0-.621.504-1.125 1.125-1.125h2.25c.621 0 1.125.504 1.125 1.125v11.25c0 .621-.504 1.125-1.125 1.125h-2.25a1.125 1.125 0 01-1.125-1.125V8.625zM16.5 4.125c0-.621.504-1.125 1.125-1.125h2.25C20.496 3 21 3.504 21 4.125v15.75c0 .621-.504 1.125-1.125 1.125h-2.25a1.125 1.125 0 01-1.125-1.125V4.125z"/></svg>
-              <p>No year data available — check that Exit Date column is present and valid.</p>
+              <p>No year data available — check that Exit Date or Turned Over Date column is present and valid.</p>
             </div>
           </div>
         </div>

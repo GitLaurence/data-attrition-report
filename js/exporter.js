@@ -59,6 +59,15 @@ window.Exporter = (() => {
       summaryData.push([]);
     }
 
+    if (result.byYearMonth.length > 0) {
+      summaryData.push(['MONTHLY ATTRITION']);
+      summaryData.push(['Month', 'Exits']);
+      for (const { label, count } of result.byYearMonth) {
+        summaryData.push([label, count]);
+      }
+      summaryData.push([]);
+    }
+
     summaryData.push(['REASON BREAKDOWN']);
     summaryData.push(['Reason', 'Count', 'Percentage']);
     for (const [reason, count] of result.byReason.entries()) {
@@ -74,21 +83,21 @@ window.Exporter = (() => {
 
     // ── Raw Data Sheet ─────────────────────────────────────────────────────
     const rawData = records.map(r => ({
-      Name:       r.name,
-      Department: r.department,
-      'Exit Date': r.exitDate
-        ? r.exitDate.toISOString().split('T')[0]
-        : '',
-      Reason: r.reason,
-      Year:   r.year   || '',
-      Month:  r.month  || '',
+      Name:           r.name,
+      Department:     r.department,
+      'Date Hired':   r.dateHired ? r.dateHired.toISOString().split('T')[0] : '',
+      'Exit Date':    r.exitDate  ? r.exitDate.toISOString().split('T')[0]  : '',
+      Reason:         r.reason,
+      Remarks:        r.remarks || '',
+      Year:           r.year    || '',
+      Month:          r.month   || '',
     }));
 
     const rawSheet = XLSX.utils.json_to_sheet(rawData, {
-      header: ['Name', 'Department', 'Exit Date', 'Reason', 'Year', 'Month'],
+      header: ['Name', 'Department', 'Date Hired', 'Exit Date', 'Reason', 'Remarks', 'Year', 'Month'],
     });
     rawSheet['!cols'] = [
-      { wch: 24 }, { wch: 18 }, { wch: 14 }, { wch: 20 }, { wch: 8 }, { wch: 8 },
+      { wch: 24 }, { wch: 18 }, { wch: 14 }, { wch: 14 }, { wch: 20 }, { wch: 28 }, { wch: 8 }, { wch: 8 },
     ];
     XLSX.utils.book_append_sheet(wb, rawSheet, 'Raw Data');
 
@@ -297,8 +306,10 @@ window.Exporter = (() => {
       ? result._records.map(r => [
           r.name,
           r.department,
-          r.exitDate ? r.exitDate.toISOString().split('T')[0] : '—',
+          r.dateHired ? r.dateHired.toISOString().split('T')[0] : '—',
+          r.exitDate  ? r.exitDate.toISOString().split('T')[0]  : '—',
           r.reason,
+          r.remarks || '—',
           r.year  || '—',
           r.month || '—',
         ])
@@ -307,7 +318,7 @@ window.Exporter = (() => {
     if (rawBody.length > 0) {
       doc.autoTable({
         startY: 27,
-        head:   [['Name', 'Department', 'Exit Date', 'Reason', 'Year', 'Month']],
+        head:   [['Name', 'Department', 'Date Hired', 'Exit Date', 'Reason', 'Remarks', 'Year', 'Month']],
         body:   rawBody,
         margin: { left: margin, right: margin },
         styles: { fontSize: 7.5, cellPadding: 2.5 },

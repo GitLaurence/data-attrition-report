@@ -375,6 +375,36 @@ input {
   max-width: 420px;
 }
 
+.format-grid {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+  width: 100%;
+  max-width: 460px;
+}
+
+.format-item {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  flex-wrap: wrap;
+}
+
+.format-item__field {
+  font-size: var(--text-xs);
+  font-weight: var(--fw-medium);
+  color: var(--color-text-secondary);
+  width: 76px;
+  text-align: right;
+  flex-shrink: 0;
+}
+
+.format-item__or {
+  font-size: var(--text-xs);
+  color: var(--color-text-muted);
+  font-style: italic;
+}
+
 /* ── Dashboard Section ─────────────────────────────────────────────────────── */
 .dashboard-section {
   display: flex;
@@ -470,6 +500,66 @@ input {
   text-transform: uppercase;
   letter-spacing: 0.06em;
   color: var(--color-text-secondary);
+  display: flex;
+  align-items: center;
+  gap: var(--space-1);
+}
+
+/* ── Tooltip ───────────────────────────────────────────────────────────────── */
+.tooltip {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  cursor: help;
+  color: var(--color-text-muted);
+  flex-shrink: 0;
+}
+.tooltip:hover {
+  color: var(--color-primary);
+}
+
+.tooltip::before,
+.tooltip::after {
+  position: absolute;
+  left: 50%;
+  pointer-events: none;
+  opacity: 0;
+  transition: opacity var(--transition-fast);
+  z-index: 300;
+}
+
+/* Arrow */
+.tooltip::before {
+  content: '';
+  top: calc(100% + 4px);
+  transform: translateX(-50%);
+  border: 5px solid transparent;
+  border-bottom-color: var(--color-nav-bg);
+}
+
+/* Bubble */
+.tooltip::after {
+  content: attr(data-tooltip);
+  top: calc(100% + 14px);
+  transform: translateX(-50%);
+  background: var(--color-nav-bg);
+  color: var(--color-nav-text);
+  font-size: var(--text-xs);
+  font-weight: var(--fw-regular);
+  text-transform: none;
+  letter-spacing: 0;
+  line-height: 1.5;
+  padding: 8px 12px;
+  border-radius: var(--radius-sm);
+  width: 210px;
+  white-space: normal;
+  text-align: left;
+  box-shadow: var(--shadow-modal);
+}
+
+.tooltip:hover::before,
+.tooltip:hover::after {
+  opacity: 1;
 }
 
 .stat-card__value {
