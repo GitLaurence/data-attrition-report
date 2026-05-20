@@ -250,10 +250,23 @@
     let cards = '';
     for (const row of rows) {
       const [yr, mo] = row.yearMonth.split('-');
-      const begin    = row.beginCount    !== null ? row.beginCount.toLocaleString()    : '—';
-      const end      = row.endCount      !== null ? row.endCount.toLocaleString()      : '—';
-      const rateText = row.attritionRate !== null ? `${row.attritionRate}%`            : 'N/A';
+      const net      = row.added - row.departures;
+      const rateText = row.attritionRate !== null ? `${row.attritionRate}%` : 'N/A';
       const addedFmt = (row.added > 0 ? '+' : '') + row.added.toLocaleString();
+
+      let netClass, netArrow, netVal;
+      if (net > 0)      { netClass = 'mhc-net--up';   netArrow = '▲'; netVal = `+${net.toLocaleString()}`; }
+      else if (net < 0) { netClass = 'mhc-net--down'; netArrow = '▼'; netVal = net.toLocaleString(); }
+      else              { netClass = 'mhc-net--flat';  netArrow = '—'; netVal = '0'; }
+
+      const headcountBlock = row.endCount !== null
+        ? `<div class="mhc-headcount">
+             <span class="mhc-headcount__val">${row.endCount.toLocaleString()}</span>
+             <span class="mhc-headcount__lbl">End of Month</span>
+           </div>`
+        : `<div class="mhc-headcount mhc-headcount--no-data">
+             <span class="mhc-headcount__lbl">Add Date Hired for headcount</span>
+           </div>`;
 
       cards += `
         <div class="mhc-card" data-year="${yr}" data-month="${mo}"
@@ -263,22 +276,22 @@
             <span class="mhc-card__month">${row.label}</span>
             <span class="mhc-rate ${rateClass(row.attritionRate)}">${rateText}</span>
           </div>
-          <div class="mhc-card__metrics">
-            <div class="mhc-metric">
-              <span class="mhc-metric__val">${begin}</span>
-              <span class="mhc-metric__lbl">Beginning</span>
+          <div class="mhc-card__body">
+            ${headcountBlock}
+            <div class="mhc-net ${netClass}">
+              <span class="mhc-net__arrow">${netArrow}</span>
+              <span class="mhc-net__val">${netVal}</span>
+              <span class="mhc-net__lbl">net</span>
             </div>
-            <div class="mhc-metric mhc-metric--added">
-              <span class="mhc-metric__val">${addedFmt}</span>
-              <span class="mhc-metric__lbl">Added</span>
-            </div>
-            <div class="mhc-metric mhc-metric--dep">
-              <span class="mhc-metric__val">${row.departures.toLocaleString()}</span>
-              <span class="mhc-metric__lbl">Departures</span>
-            </div>
-            <div class="mhc-metric">
-              <span class="mhc-metric__val">${end}</span>
-              <span class="mhc-metric__lbl">Ending</span>
+            <div class="mhc-card__breakdown">
+              <div class="mhc-breakdown__item mhc-breakdown__item--added">
+                <span class="mhc-breakdown__val">${addedFmt}</span>
+                <span class="mhc-breakdown__lbl">Hired</span>
+              </div>
+              <div class="mhc-breakdown__item mhc-breakdown__item--dep">
+                <span class="mhc-breakdown__val">${row.departures.toLocaleString()}</span>
+                <span class="mhc-breakdown__lbl">Departed</span>
+              </div>
             </div>
           </div>
         </div>`;
@@ -288,27 +301,28 @@
     cards += `
       <div class="mhc-card mhc-card--summary">
         <div class="mhc-card__header">
-          <span class="mhc-card__month">Summary</span>
+          <span class="mhc-card__month">Period Summary</span>
           <span class="mhc-rate" id="sum-rate">—</span>
         </div>
-        <div class="mhc-card__metrics mhc-card__metrics--row">
+        <div class="mhc-card__metrics">
           <div class="mhc-metric">
             <span class="mhc-metric__val" id="sum-begin">—</span>
-            <span class="mhc-metric__lbl">Beginning</span>
+            <span class="mhc-metric__lbl">Period Start</span>
           </div>
           <div class="mhc-metric mhc-metric--added">
             <span class="mhc-metric__val" id="sum-added">—</span>
-            <span class="mhc-metric__lbl">Added</span>
+            <span class="mhc-metric__lbl">Total Hired</span>
           </div>
           <div class="mhc-metric mhc-metric--dep">
             <span class="mhc-metric__val" id="sum-dep">—</span>
-            <span class="mhc-metric__lbl">Departures</span>
+            <span class="mhc-metric__lbl">Total Exits</span>
           </div>
           <div class="mhc-metric">
             <span class="mhc-metric__val" id="sum-end">—</span>
-            <span class="mhc-metric__lbl">Ending</span>
+            <span class="mhc-metric__lbl">Period End</span>
           </div>
         </div>
+        <div class="mhc-sparkline-wrap" id="sum-sparkline"></div>
       </div>`;
 
     container.innerHTML = `
@@ -322,19 +336,60 @@
           <div class="filter-pills" id="mhc-month-filter">${monthPills}</div>
         </div>
       </div>
+      <div class="mhc-period-bar">
+        <div class="mhc-kpi">
+          <span class="mhc-kpi__val" id="kpi-start">—</span>
+          <span class="mhc-kpi__lbl">Period Start</span>
+        </div>
+        <div class="mhc-kpi mhc-kpi--hired">
+          <span class="mhc-kpi__val" id="kpi-hired">—</span>
+          <span class="mhc-kpi__lbl">Total Hired</span>
+        </div>
+        <div class="mhc-kpi mhc-kpi--exits">
+          <span class="mhc-kpi__val" id="kpi-exits">—</span>
+          <span class="mhc-kpi__lbl">Total Exits</span>
+        </div>
+        <div class="mhc-kpi">
+          <span class="mhc-kpi__val" id="kpi-end">—</span>
+          <span class="mhc-kpi__lbl">Period End</span>
+        </div>
+        <div class="mhc-kpi" id="kpi-attrition-wrap">
+          <span class="mhc-kpi__val" id="kpi-attrition">—</span>
+          <span class="mhc-kpi__lbl">Avg Attrition</span>
+        </div>
+      </div>
       <div class="mhc-grid">${cards}</div>`;
 
     // ── Filter logic ────────────────────────────────────────────────────────
     let activeYear = 'all', activeMonth = 'all';
 
+    function buildSparkline(endCounts) {
+      if (endCounts.length < 2) return '';
+      const W = 400, H = 44, pad = 6;
+      const min = Math.min(...endCounts);
+      const max = Math.max(...endCounts);
+      const range = max - min || 1;
+      const pts = endCounts.map((v, i) => {
+        const x = pad + (i / (endCounts.length - 1)) * (W - pad * 2);
+        const y = H - pad - ((v - min) / range) * (H - pad * 2);
+        return `${x.toFixed(1)},${y.toFixed(1)}`;
+      });
+      const lastPt = pts[pts.length - 1].split(',');
+      return `<svg class="mhc-sparkline" viewBox="0 0 ${W} ${H}" preserveAspectRatio="none" aria-hidden="true">
+        <polyline points="${pts.join(' ')}" fill="none" stroke="var(--color-primary)" stroke-width="2" stroke-linejoin="round" stroke-linecap="round"/>
+        <circle cx="${lastPt[0]}" cy="${lastPt[1]}" r="3.5" fill="var(--color-primary)"/>
+      </svg>`;
+    }
+
     function applyFilter() {
       const monthCards = container.querySelectorAll('.mhc-card:not(.mhc-card--summary)');
       let visBegin = -1, visEnd = -1, visAdded = 0, visDep = 0, firstSet = false;
+      const sparkPoints = [];
 
       for (const card of monthCards) {
-        const matchY   = activeYear  === 'all' || card.dataset.year  === activeYear;
-        const matchM   = activeMonth === 'all' || card.dataset.month === activeMonth;
-        const visible  = matchY && matchM;
+        const matchY  = activeYear  === 'all' || card.dataset.year  === activeYear;
+        const matchM  = activeMonth === 'all' || card.dataset.month === activeMonth;
+        const visible = matchY && matchM;
         card.style.display = visible ? '' : 'none';
 
         if (visible) {
@@ -344,18 +399,33 @@
           if (e !== -1) visEnd = e;
           visAdded += parseInt(card.dataset.added);
           visDep   += parseInt(card.dataset.departures);
+          if (e !== -1) sparkPoints.push(e);
         }
       }
 
-      const sumRate    = visBegin > 0 ? ((visDep / visBegin) * 100).toFixed(2) : null;
-      const sumRateEl  = document.getElementById('sum-rate');
+      const sumRate   = visBegin > 0 ? ((visDep / visBegin) * 100).toFixed(2) : null;
+      const sumRateEl = document.getElementById('sum-rate');
       sumRateEl.textContent = sumRate !== null ? `${sumRate}%` : '—';
       sumRateEl.className   = `mhc-rate ${rateClass(sumRate)}`;
 
-      document.getElementById('sum-begin').textContent = visBegin !== -1 ? visBegin.toLocaleString() : '—';
+      const fmtBegin = visBegin !== -1 ? visBegin.toLocaleString() : '—';
+      const fmtEnd   = visEnd   !== -1 ? visEnd.toLocaleString()   : '—';
+      document.getElementById('sum-begin').textContent = fmtBegin;
       document.getElementById('sum-added').textContent = `+${visAdded.toLocaleString()}`;
       document.getElementById('sum-dep').textContent   = visDep.toLocaleString();
-      document.getElementById('sum-end').textContent   = visEnd  !== -1 ? visEnd.toLocaleString()  : '—';
+      document.getElementById('sum-end').textContent   = fmtEnd;
+
+      document.getElementById('kpi-start').textContent = fmtBegin;
+      document.getElementById('kpi-hired').textContent = `+${visAdded.toLocaleString()}`;
+      document.getElementById('kpi-exits').textContent = visDep.toLocaleString();
+      document.getElementById('kpi-end').textContent   = fmtEnd;
+
+      const kpiAttrEl  = document.getElementById('kpi-attrition');
+      const kpiWrapEl  = document.getElementById('kpi-attrition-wrap');
+      kpiAttrEl.textContent = sumRate !== null ? `${sumRate}%` : '—';
+      kpiWrapEl.className   = `mhc-kpi mhc-kpi--attrition ${rateClass(sumRate).replace('mhc-rate--', 'mhc-kpi--')}`;
+
+      document.getElementById('sum-sparkline').innerHTML = buildSparkline(sparkPoints);
     }
 
     function bindPills(containerId, attr) {

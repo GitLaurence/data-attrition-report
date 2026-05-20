@@ -12,12 +12,11 @@ A client-side web application that reads employee data from an Excel file, gener
   - Total attrition per year, stacked by exit reason
   - Monthly attrition trend
   - Reason breakdown (doughnut chart)
-- **Monthly Headcount Analysis table** — automatically computes per month:
-  - Employee Count at the Beginning of the Month
-  - Employees Added
-  - Employee Departures
-  - Employee Count at the End of the Month
-  - Attrition Rate (%)
+- **Monthly Headcount Analysis** — redesigned card-based view for HR managers:
+  - At-a-glance period KPI bar (Period Start, Total Hired, Total Exits, Period End, Avg Attrition Rate)
+  - Per-month cards showing end-of-month headcount, net change direction (▲/▼), hired vs. departed breakdown, and colour-coded attrition rate badge
+  - Headcount trend sparkline in the Period Summary card
+  - Year and month filter pills to narrow the view
 - Stat card tooltips explaining each metric (hover the ⓘ icon)
 - Export the full report to Excel (Summary + Raw Data sheets, including monthly headcount analysis)
 - Export the full report to a multi-page PDF with embedded charts
@@ -136,17 +135,39 @@ Hover the **ⓘ** icon on any card to see a tooltip explanation directly in the 
 
 ## Monthly Headcount Analysis
 
-The table beneath the charts breaks down each month automatically:
+The section beneath the charts displays a card-based view designed for HR managers, with all values derived directly from the uploaded file.
 
-| Column | How it is calculated |
+### Period KPI Bar
+
+A summary row at the top of the section shows totals for the currently filtered period:
+
+| KPI | Description |
 |---|---|
-| **Beginning Count** | Employees whose `Date Hired` is before the first day of the month and who had not yet exited by that date |
-| **Employees Added** | Employees whose `Date Hired` falls within that month |
-| **Employee Departures** | Employees whose `Exit Date` falls within that month |
-| **Ending Count** | Employees whose `Date Hired` is on or before the last day of the month and who had not yet exited by that date |
-| **Attrition Rate (%)** | `Departures ÷ Beginning Count × 100` |
+| **Period Start** | Headcount at the beginning of the first visible month |
+| **Total Hired** | Sum of all new hires across visible months |
+| **Total Exits** | Sum of all departures across visible months |
+| **Period End** | Headcount at the end of the last visible month |
+| **Avg Attrition** | `Total Exits ÷ Period Start × 100`, colour-coded green / yellow / red |
 
-All values are derived directly from the uploaded file — no manual input required.
+### Month Cards
+
+Each card shows:
+
+| Element | How it is calculated |
+|---|---|
+| **Attrition rate badge** | `Departures ÷ Beginning Count × 100` — green < 2%, yellow 2–5%, red ≥ 5% |
+| **End of Month** | Employees hired on or before the last day with no exit date, or exit date after month end |
+| **Net change** (▲ / ▼) | `Hired − Departed` for that month |
+| **Hired** | Employees whose `Date Hired` falls within the month |
+| **Departed** | Employees whose `Exit Date` falls within the month |
+
+### Period Summary Card
+
+A full-width card at the bottom aggregates the visible months and includes a **headcount trend sparkline** showing whether the workforce grew or shrank over the selected period.
+
+### Filters
+
+Use the **Year** and **Month** filter pills to narrow the view. The period KPI bar and summary card update automatically.
 
 ---
 
