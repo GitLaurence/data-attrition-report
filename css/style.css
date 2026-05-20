@@ -583,40 +583,6 @@ input {
   animation: stat-pop 280ms cubic-bezier(.34,1.56,.64,1);
 }
 
-/* ── Headcount Panel ───────────────────────────────────────────────────────── */
-.headcount-panel {
-  background: var(--color-surface);
-  border: 1px solid var(--color-border);
-  border-radius: var(--radius-md);
-  box-shadow: var(--shadow-card);
-  overflow: hidden;
-}
-
-.headcount-panel__inner {
-  display: flex;
-  align-items: center;
-  gap: var(--space-3);
-  padding: var(--space-3) var(--space-4);
-  flex-wrap: wrap;
-}
-.headcount-panel__inner > svg {
-  color: var(--color-text-muted);
-  flex-shrink: 0;
-}
-
-.headcount-panel__label {
-  font-size: var(--text-sm);
-  color: var(--color-text-secondary);
-  flex: 1;
-  min-width: 200px;
-}
-
-.headcount-panel__controls {
-  display: flex;
-  align-items: center;
-  gap: var(--space-2);
-}
-
 /* ── Charts Grid ───────────────────────────────────────────────────────────── */
 .charts-grid {
   display: grid;
@@ -684,38 +650,6 @@ input {
 /* ── Monthly Headcount Table ─────────────────────────────────────────────── */
 .monthly-table-card .chart-card__body--table {
   padding: 0 var(--space-4) var(--space-4);
-}
-
-.monthly-hc-form {
-  display: flex;
-  align-items: center;
-  gap: var(--space-2);
-  flex-shrink: 0;
-}
-
-.monthly-hc-form__label {
-  display: flex;
-  align-items: center;
-  gap: var(--space-1);
-  font-size: var(--text-xs);
-  font-weight: var(--fw-medium);
-  color: var(--color-text-secondary);
-  white-space: nowrap;
-}
-
-.input--sm {
-  width: 110px;
-  font-size: var(--text-sm);
-  padding: 6px 10px;
-}
-
-@media (max-width: 639px) {
-  .monthly-hc-form {
-    flex-wrap: wrap;
-  }
-  .input--sm {
-    width: 90px;
-  }
 }
 
 .table-scroll {
@@ -942,18 +876,6 @@ input {
 
   .stat-cards {
     grid-template-columns: 1fr;
-  }
-
-  .headcount-panel__inner {
-    flex-direction: column;
-    align-items: flex-start;
-  }
-  .headcount-panel__controls {
-    width: 100%;
-  }
-  .headcount-panel__controls .input {
-    flex: 1;
-    width: auto;
   }
 
   .toast-container {

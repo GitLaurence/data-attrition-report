@@ -24,7 +24,7 @@ window.Analytics = (() => {
     return `${MONTHS[m - 1]} ${y}`;
   }
 
-  function compute(records, headcount) {
+  function compute(records) {
     const totalExits = records.length;
 
     if (totalExits === 0) {
@@ -116,7 +116,7 @@ window.Analytics = (() => {
       }
     }
 
-    // ── monthlyHeadcount (combined exits + hires + running totals) ──────────
+    // ── monthlyHeadcount (derived from dateHired + exitDate per record) ─────
     let monthlyHeadcount = [];
 
     const combinedYMs = new Set([
@@ -124,21 +124,39 @@ window.Analytics = (() => {
       ...rawHireCounts.keys(),
     ]);
 
+    const hiredRecords = records.filter(r => r.dateHired !== null);
+    const hasHireData  = hiredRecords.length > 0;
+
     if (combinedYMs.size > 0) {
       const sortedCombined = [...combinedYMs].sort();
       const minCombined    = sortedCombined[0];
       const maxCombined    = sortedCombined[sortedCombined.length - 1];
 
-      let runningCount = (headcount && headcount > 0) ? headcount : null;
       let cur = minCombined;
 
       while (cur <= maxCombined) {
+        const [y, m]  = cur.split('-').map(Number);
+        const firstDay = new Date(y, m - 1, 1);
+        const lastDay  = new Date(y, m, 0, 23, 59, 59, 999);
+
         const departures = rawMonthCounts.get(cur) || 0;
         const added      = rawHireCounts.get(cur)  || 0;
-        const beginCount = runningCount;
-        const endCount   = runningCount !== null
-          ? Math.max(0, runningCount + added - departures)
-          : null;
+
+        let beginCount = null;
+        let endCount   = null;
+
+        if (hasHireData) {
+          beginCount = hiredRecords.filter(r =>
+            r.dateHired < firstDay &&
+            (r.exitDate === null || r.exitDate >= firstDay)
+          ).length;
+
+          endCount = hiredRecords.filter(r =>
+            r.dateHired <= lastDay &&
+            (r.exitDate === null || r.exitDate > lastDay)
+          ).length;
+        }
+
         const attritionRate = (beginCount !== null && beginCount > 0)
           ? ((departures / beginCount) * 100).toFixed(2)
           : null;
@@ -153,7 +171,6 @@ window.Analytics = (() => {
           attritionRate,
         });
 
-        if (runningCount !== null) runningCount = endCount;
         cur = addMonths(cur, 1);
       }
     }
@@ -178,13 +195,7 @@ window.Analytics = (() => {
     // ── avgAttritionRate ────────────────────────────────────────────────────
     let avgAttritionRate;
 
-    if (headcount && headcount > 0 && years.length > 0) {
-      const rate = (totalExits / years.length / headcount) * 100;
-      avgAttritionRate = {
-        value:  Math.round(rate * 10) / 10,
-        isRate: true,
-      };
-    } else if (years.length > 0) {
+    if (years.length > 0) {
       const avg = totalExits / years.length;
       avgAttritionRate = {
         value:  Math.round(avg * 10) / 10,

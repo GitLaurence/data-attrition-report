@@ -8,7 +8,6 @@
   const state = {
     records:         null,
     analyticsResult: null,
-    headcount:       null,
     fileName:        '',
   };
 
@@ -16,8 +15,6 @@
   let $uploadSection, $dashboardSection;
   let $dropZone, $fileInput, $btnBrowse;
   let $btnExportExcel, $btnExportPDF, $btnReset;
-  let $btnApplyHeadcount, $inputHeadcount;
-  let $btnApplyMonthlyHeadcount, $inputMonthlyHeadcount;
   let $fileBadgeName, $fileBadgeCount;
   let $valTotal, $valPeakMonth, $valPeakDetail, $valAvgRate, $valAvgRateSub;
   let $loadingOverlay, $loadingText;
@@ -33,10 +30,6 @@
     $btnExportExcel   = document.getElementById('btn-export-excel');
     $btnExportPDF     = document.getElementById('btn-export-pdf');
     $btnReset         = document.getElementById('btn-reset');
-    $btnApplyHeadcount        = document.getElementById('btn-apply-headcount');
-    $inputHeadcount           = document.getElementById('input-headcount');
-    $btnApplyMonthlyHeadcount = document.getElementById('btn-apply-monthly-headcount');
-    $inputMonthlyHeadcount    = document.getElementById('input-monthly-headcount');
     $fileBadgeName    = document.getElementById('file-badge-name');
     $fileBadgeCount   = document.getElementById('file-badge-count');
     $valTotal         = document.getElementById('val-total');
@@ -97,18 +90,8 @@
     document.addEventListener('drop',     (e) => e.preventDefault());
 
     $btnReset.addEventListener('click', handleReset);
-    $btnApplyHeadcount.addEventListener('click', handleHeadcountApply);
-    $inputHeadcount.addEventListener('keydown', (e) => {
-      if (e.key === 'Enter') handleHeadcountApply();
-    });
-
     $btnExportExcel.addEventListener('click', handleExportExcel);
     $btnExportPDF.addEventListener('click',   handleExportPDF);
-
-    $btnApplyMonthlyHeadcount.addEventListener('click', handleMonthlyHeadcountApply);
-    $inputMonthlyHeadcount.addEventListener('keydown', (e) => {
-      if (e.key === 'Enter') handleMonthlyHeadcountApply();
-    });
   }
 
   // Yields to the browser for one paint frame
@@ -135,7 +118,7 @@
       state.records  = records;
       state.fileName = file.name;
 
-      state.analyticsResult          = Analytics.compute(records, state.headcount);
+      state.analyticsResult          = Analytics.compute(records);
       state.analyticsResult._records = records;
 
       Charts.render(state.analyticsResult);
@@ -165,50 +148,11 @@
     }
   }
 
-  function handleHeadcountApply() {
-    const raw = parseInt($inputHeadcount.value, 10);
-    if (isNaN(raw) || raw <= 0) {
-      showToast('Please enter a valid headcount greater than 0.', 'error');
-      return;
-    }
-    state.headcount = raw;
-    // Keep the inline monthly input in sync
-    if ($inputMonthlyHeadcount) $inputMonthlyHeadcount.value = raw;
-
-    state.analyticsResult = Analytics.compute(state.records, state.headcount);
-    state.analyticsResult._records = state.records;
-
-    Charts.render(state.analyticsResult);
-    updateStatCards(state.analyticsResult);
-
-    showToast(`Attrition rate updated using headcount of ${raw.toLocaleString()}.`, 'success');
-  }
-
-  function handleMonthlyHeadcountApply() {
-    const raw = parseInt($inputMonthlyHeadcount.value, 10);
-    if (isNaN(raw) || raw <= 0) {
-      showToast('Please enter a valid starting headcount greater than 0.', 'error');
-      return;
-    }
-    state.headcount = raw;
-    // Keep the top panel input in sync
-    if ($inputHeadcount) $inputHeadcount.value = raw;
-
-    state.analyticsResult = Analytics.compute(state.records, state.headcount);
-    state.analyticsResult._records = state.records;
-
-    Charts.render(state.analyticsResult);
-    updateStatCards(state.analyticsResult);
-
-    showToast(`Monthly headcount analysis updated with starting count of ${raw.toLocaleString()}.`, 'success');
-  }
-
   function handleReset() {
     Charts.destroy();
 
     state.records         = null;
     state.analyticsResult = null;
-    state.headcount       = null;
     state.fileName        = '';
 
     $dashboardSection.classList.add('hidden');
@@ -218,8 +162,6 @@
     $btnExportPDF.disabled   = true;
 
     $fileInput.value    = '';
-    $inputHeadcount.value = '';
-    $inputMonthlyHeadcount.value = '';
     $fileBadgeName.textContent  = '';
     $fileBadgeCount.textContent = '';
   }
@@ -260,13 +202,8 @@
       ? `${result.peakMonth.count} exits · ${result.peakMonth.pct}% of total`
       : '';
 
-    if (result.avgAttritionRate.isRate) {
-      animateValue($valAvgRate, `${result.avgAttritionRate.value}%`);
-      $valAvgRateSub.textContent = 'of total headcount per year';
-    } else {
-      animateValue($valAvgRate, `${result.avgAttritionRate.value}`);
-      $valAvgRateSub.textContent = 'avg exits per year';
-    }
+    animateValue($valAvgRate, `${result.avgAttritionRate.value}`);
+    $valAvgRateSub.textContent = 'avg exits per year';
 
     renderMonthlyTable(result);
   }
