@@ -1,6 +1,6 @@
 # Data Attrition Report
 
-A client-side web application that reads employee exit data from an Excel file, generates graphical attrition reports, and exports results to Excel or PDF — no backend or server required.
+A client-side web application that reads employee data from an Excel file, generates graphical attrition reports, and exports results to Excel or PDF — no backend or server required.
 
 ---
 
@@ -12,9 +12,14 @@ A client-side web application that reads employee exit data from an Excel file, 
   - Total attrition per year, stacked by exit reason
   - Monthly attrition trend
   - Reason breakdown (doughnut chart)
+- **Monthly Headcount Analysis table** — automatically computes per month:
+  - Employee Count at the Beginning of the Month
+  - Employees Added
+  - Employee Departures
+  - Employee Count at the End of the Month
+  - Attrition Rate (%)
 - Stat card tooltips explaining each metric (hover the ⓘ icon)
-- Optional headcount input to compute a true attrition rate (%)
-- Export the full report to Excel (Summary + Raw Data sheets, including monthly attrition)
+- Export the full report to Excel (Summary + Raw Data sheets, including monthly headcount analysis)
 - Export the full report to a multi-page PDF with embedded charts
 
 ---
@@ -42,12 +47,21 @@ Your file must have a **header row as the first row**. Column names are matched 
 |---|---|---|
 | Employee Name | `Last Name` + `First Name` + `Middle Name` — or — `Name`, `Employee Name`, `Full Name` | Yes |
 | Department | `Department`, `Dept`, `Division`, `Team` | Yes |
-| Exit Date | `Date of Last Day`, `Exit Date`, `Termination Date`, `Separation Date`, `Last Day`, `Turned Over Date` | Yes |
-| Reason | `Last Update`, `Reason`, `Exit Reason`, `Separation Reason`, `Type`, `Reason for Leaving` | Yes |
-| Date Hired | `Date Hired`, `Date of Hire`, `Hire Date` | No |
+| Exit Date | `Date of Last Day`, `Exit Date`, `Termination Date`, `Separation Date`, `Last Day`, `Turned Over Date` | Yes (leave blank for active employees) |
+| Reason | `Last Update`, `Reason`, `Exit Reason`, `Separation Reason`, `Type`, `Reason for Leaving` | Yes (leave blank for active employees) |
+| Date Hired | `Date Hired`, `Date of Hire`, `Hire Date` | Required for Monthly Headcount Analysis |
 | Remarks | `Remarks`, `Notes`, `Comment` | No |
 
 Any other columns in the file are ignored.
+
+### Including Active Employees
+
+To unlock the full **Monthly Headcount Analysis** (Beginning Count, Ending Count, Attrition Rate), your file should include **all employees** — both current and departed — each with a `Date Hired` value:
+
+- **Departed employees** — fill in `Date Hired`, `Exit Date`, and `Reason`
+- **Active employees** — fill in `Date Hired` only; leave `Exit Date` and `Reason` blank
+
+If the file contains only departed employees, the Beginning/Ending Count and Attrition Rate columns will show `—`.
 
 ### Accepted Reason Values
 
@@ -55,24 +69,27 @@ The `Reason` (or `Last Update`) column is normalized automatically. Accepted val
 
 | Category | Accepted values |
 |---|---|
-| **Resignation** | `Resignation`, `Resigned`, `Resign`, `Voluntary`, `Voluntary Resignation`, or any value starting with `Resign` (e.g. `Resign - due to personal reasons`) |
+| **Resignation** | `Resignation`, `Resigned`, `Resign`, `Voluntary`, `Voluntary Resignation`, or any value starting with `Resign` |
 | **Termination** | `Termination`, `Terminated`, `Involuntary`, `Dismissed`, `Fired`, `AWOL`, `Absent Without Leave` |
 | **Retirement** | `Retirement`, `Retired`, or any value starting with `Retir` |
 | **Redundancy** | `Redundancy`, `Redundant`, `Laid Off`, `Layoff`, `Retrenchment` |
 | **End of Contract** | `End of Contract`, `EOC`, `Contract Ended`, `Contract Expired`, `Fixed Term`, `End of Employment` |
 | **Other** | Anything not matched above |
 
-### Sample Data (split-name format)
+### Sample Data (split-name format, all employees)
 
 ```
 Last Name  | First Name | Middle Name | Department  | Date Hired | Date of Last Day | Last Update  | Remarks
 -----------|------------|-------------|-------------|------------|------------------|--------------|---------------------------
 dela Cruz  | Juan       | Santos      | Engineering | 2020-05-01 | 2024-01-10       | RESIGN       |
 Santos     | Maria      | Lopez       | HR          | 2019-03-15 | 2024-01-22       | TERMINATION  |
-Reyes      | Pedro      | Garcia      | Finance     | 2021-07-20 | 2024-03-05       | RESIGN - due to pregnancy |
+Reyes      | Pedro      | Garcia      | Finance     | 2021-07-20 | 2024-03-05       | RESIGN       |
 Lim        | Ana        | Cruz        | IT          | 2018-01-10 | 2024-05-18       | RETIREMENT   |
 Mendoza    | Carlo      | Bautista    | Operations  | 2022-02-28 | 2023-11-30       | AWOL         | No show since Nov 15
+Garcia     | Rosa       | Reyes       | Engineering | 2021-09-01 |                  |              |
+Bautista   | Jose       | Santos      | IT          | 2023-03-15 |                  |              |
 ```
+*(Last two rows are active employees — no Exit Date or Reason)*
 
 ### Sample Data (single-name format)
 
@@ -92,7 +109,6 @@ Pedro Reyes      | Finance     | 2024-03-05       | Resignation
 data-attrition-report/
 ├── index.html              # Main application page
 ├── generate-sample.html    # Utility to generate a sample Excel file
-├── data-and-format.xlsx    # Reference data file
 ├── css/
 │   └── style.css           # Application styles
 ├── js/
@@ -112,9 +128,25 @@ data-attrition-report/
 |---|---|
 | **Total Exits** | Count of all employee separation records found in the uploaded file. |
 | **Peak Month** | The calendar month with the highest number of exits, with its count and share of all exits. |
-| **Avg Attrition Rate** | Average exits per year across all years in the data. Enter a total headcount and click **Apply** to convert this into a percentage of your workforce. |
+| **Avg Attrition Rate** | Average exits per year across all years in the data. |
 
 Hover the **ⓘ** icon on any card to see a tooltip explanation directly in the app.
+
+---
+
+## Monthly Headcount Analysis
+
+The table beneath the charts breaks down each month automatically:
+
+| Column | How it is calculated |
+|---|---|
+| **Beginning Count** | Employees whose `Date Hired` is before the first day of the month and who had not yet exited by that date |
+| **Employees Added** | Employees whose `Date Hired` falls within that month |
+| **Employee Departures** | Employees whose `Exit Date` falls within that month |
+| **Ending Count** | Employees whose `Date Hired` is on or before the last day of the month and who had not yet exited by that date |
+| **Attrition Rate (%)** | `Departures ÷ Beginning Count × 100` |
+
+All values are derived directly from the uploaded file — no manual input required.
 
 ---
 
@@ -123,9 +155,8 @@ Hover the **ⓘ** icon on any card to see a tooltip explanation directly in the 
 1. Clone or download this repository
 2. Open `index.html` in any modern browser (Chrome, Firefox, Edge)
 3. Drag and drop your `.xlsx` file onto the upload zone, or click **Browse File**
-4. The report generates automatically
-5. Optionally enter a total headcount and click **Apply** to compute an attrition rate
-6. Click **Export Excel** or **Export PDF** to download the report
+4. The report generates automatically — charts, stat cards, and the monthly headcount table all populate from the file
+5. Click **Export Excel** or **Export PDF** to download the report
 
 > No installation, no server, no build step required.
 
@@ -137,7 +168,7 @@ Hover the **ⓘ** icon on any card to see a tooltip explanation directly in the 
 
 | Sheet | Contents |
 |---|---|
-| Summary | Overview metrics, attrition by year & reason table, monthly attrition, reason breakdown |
+| Summary | Overview metrics, attrition by year & reason, monthly headcount analysis (Beginning Count, Employees Added, Departures, Ending Count, Attrition Rate), reason breakdown |
 | Raw Data | One row per employee: Name, Department, Date Hired, Exit Date, Reason, Remarks, Year, Month |
 
 ### PDF (landscape A4)
@@ -146,7 +177,8 @@ Hover the **ⓘ** icon on any card to see a tooltip explanation directly in the 
 |---|---|
 | 1 | Header, stat cards (Total Exits, Peak Month, Avg Rate), Attrition by Year bar chart |
 | 2 | Monthly trend line chart, Reason breakdown doughnut, Yearly summary table |
-| 3+ | Employee exit records table (auto-paginated) |
+| 3 | Monthly Headcount Analysis table (Beginning Count, Employees Added, Departures, Ending Count, Attrition Rate) |
+| 4+ | Employee exit records table (auto-paginated) |
 
 ---
 
