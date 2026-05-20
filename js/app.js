@@ -237,6 +237,87 @@
       animateValue($valAvgRate, `${result.avgAttritionRate.value}`);
       $valAvgRateSub.textContent = 'avg exits per year';
     }
+
+    renderMonthlyTable(result);
+  }
+
+  // ── Monthly Headcount Table ───────────────────────────────────────────────
+  function renderMonthlyTable(result) {
+    const container = document.getElementById('monthly-table-container');
+    const emptyEl   = document.getElementById('monthly-table-empty');
+    if (!container) return;
+
+    const rows = result.monthlyHeadcount || [];
+
+    if (rows.length === 0) {
+      container.innerHTML = '';
+      container.appendChild(emptyEl);
+      emptyEl.classList.remove('hidden');
+      return;
+    }
+
+    emptyEl.classList.add('hidden');
+
+    const hasHeadcount = rows.some(r => r.beginCount !== null);
+
+    // Totals
+    const totalAdded      = rows.reduce((s, r) => s + r.added,      0);
+    const totalDepartures = rows.reduce((s, r) => s + r.departures, 0);
+
+    let thead = `
+      <thead>
+        <tr>
+          <th>Month</th>
+          <th>Beginning Count</th>
+          <th>Employees Added</th>
+          <th>Employee Departures</th>
+          <th>Ending Count</th>
+          <th>Attrition Rate (%)</th>
+        </tr>
+      </thead>`;
+
+    let tbody = '<tbody>';
+    for (const row of rows) {
+      const begin  = row.beginCount  !== null ? row.beginCount.toLocaleString()  : '—';
+      const end    = row.endCount    !== null ? row.endCount.toLocaleString()    : '—';
+      const rate   = row.attritionRate !== null ? `${row.attritionRate}%`        : '—';
+      const rateClass = row.attritionRate !== null
+        ? (parseFloat(row.attritionRate) >= 5 ? 'cell--high' : 'cell--normal')
+        : '';
+      tbody += `
+        <tr>
+          <td class="cell--month">${row.label}</td>
+          <td>${begin}</td>
+          <td class="${row.added > 0 ? 'cell--added' : ''}">${row.added > 0 ? '+' : ''}${row.added.toLocaleString()}</td>
+          <td class="${row.departures > 0 ? 'cell--departures' : ''}">${row.departures.toLocaleString()}</td>
+          <td>${end}</td>
+          <td class="${rateClass}">${rate}</td>
+        </tr>`;
+    }
+
+    // Summary row
+    const lastRow   = rows[rows.length - 1];
+    const finalEnd  = lastRow.endCount  !== null ? lastRow.endCount.toLocaleString()  : '—';
+    const firstBegin = rows[0].beginCount !== null ? rows[0].beginCount.toLocaleString() : '—';
+    tbody += `
+      <tr class="row--total">
+        <td class="cell--month">Total / Final</td>
+        <td>${firstBegin}</td>
+        <td>+${totalAdded.toLocaleString()}</td>
+        <td>${totalDepartures.toLocaleString()}</td>
+        <td>${finalEnd}</td>
+        <td>—</td>
+      </tr>`;
+    tbody += '</tbody>';
+
+    container.innerHTML = `
+      <div class="table-scroll">
+        <table class="data-table">
+          ${thead}
+          ${tbody}
+        </table>
+      </div>
+      ${!hasHeadcount ? `<p class="table-note">Enter a starting headcount above and click Apply to calculate Beginning/Ending counts and Attrition Rate.</p>` : ''}`;
   }
 
   function animateValue(el, newText) {

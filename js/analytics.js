@@ -34,6 +34,7 @@ window.Analytics = (() => {
         avgAttritionRate: { value: 0, isRate: false },
         byYearByReason: new Map(),
         byYearMonth: [],
+        monthlyHeadcount: [],
         byReason: new Map(),
         years: [],
         reasons: [],
@@ -81,6 +82,16 @@ window.Analytics = (() => {
       }
     }
 
+    // ── New hires per month (from dateHired) ────────────────────────────────
+    const rawHireCounts = new Map();
+    for (const r of records) {
+      if (!r.dateHired) continue;
+      const hy  = r.dateHired.getFullYear();
+      const hmo = r.dateHired.getMonth() + 1;
+      const hym = `${hy}-${String(hmo).padStart(2, '0')}`;
+      rawHireCounts.set(hym, (rawHireCounts.get(hym) || 0) + 1);
+    }
+
     // ── byYearMonth (with gap-fill) ─────────────────────────────────────────
     const rawMonthCounts = new Map();
     for (const r of timed) {
@@ -101,6 +112,48 @@ window.Analytics = (() => {
           label:     yearMonthLabel(cur),
           count:     rawMonthCounts.get(cur) || 0,
         });
+        cur = addMonths(cur, 1);
+      }
+    }
+
+    // ── monthlyHeadcount (combined exits + hires + running totals) ──────────
+    let monthlyHeadcount = [];
+
+    const combinedYMs = new Set([
+      ...rawMonthCounts.keys(),
+      ...rawHireCounts.keys(),
+    ]);
+
+    if (combinedYMs.size > 0) {
+      const sortedCombined = [...combinedYMs].sort();
+      const minCombined    = sortedCombined[0];
+      const maxCombined    = sortedCombined[sortedCombined.length - 1];
+
+      let runningCount = (headcount && headcount > 0) ? headcount : null;
+      let cur = minCombined;
+
+      while (cur <= maxCombined) {
+        const departures = rawMonthCounts.get(cur) || 0;
+        const added      = rawHireCounts.get(cur)  || 0;
+        const beginCount = runningCount;
+        const endCount   = runningCount !== null
+          ? Math.max(0, runningCount + added - departures)
+          : null;
+        const attritionRate = (beginCount !== null && beginCount > 0)
+          ? ((departures / beginCount) * 100).toFixed(2)
+          : null;
+
+        monthlyHeadcount.push({
+          yearMonth: cur,
+          label:     yearMonthLabel(cur),
+          beginCount,
+          added,
+          departures,
+          endCount,
+          attritionRate,
+        });
+
+        if (runningCount !== null) runningCount = endCount;
         cur = addMonths(cur, 1);
       }
     }
@@ -147,6 +200,7 @@ window.Analytics = (() => {
       avgAttritionRate,
       byYearByReason,
       byYearMonth,
+      monthlyHeadcount,
       byReason: sortedByReason,
       years,
       reasons,

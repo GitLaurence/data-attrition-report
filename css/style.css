@@ -675,6 +675,100 @@ input {
   justify-content: center;
 }
 
+.chart-card__body--table {
+  height: auto;
+  padding: 0;
+  overflow: hidden;
+}
+
+/* ── Monthly Headcount Table ─────────────────────────────────────────────── */
+.monthly-table-card .chart-card__body--table {
+  padding: 0 var(--space-4) var(--space-4);
+}
+
+.table-scroll {
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+}
+
+.data-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: var(--text-sm);
+  white-space: nowrap;
+}
+
+.data-table thead th {
+  background: var(--color-surface-2);
+  color: var(--color-text-secondary);
+  font-weight: var(--fw-semibold);
+  font-size: var(--text-xs);
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  padding: var(--space-3) var(--space-4);
+  text-align: right;
+  border-bottom: 2px solid var(--color-border);
+}
+
+.data-table thead th:first-child {
+  text-align: left;
+}
+
+.data-table tbody td {
+  padding: var(--space-3) var(--space-4);
+  border-bottom: 1px solid var(--color-border);
+  color: var(--color-text);
+  text-align: right;
+}
+
+.data-table tbody td:first-child {
+  text-align: left;
+  font-weight: var(--fw-medium);
+}
+
+.data-table tbody tr:hover td {
+  background: var(--color-surface-2);
+}
+
+.data-table .cell--month {
+  color: var(--color-text-secondary);
+  min-width: 100px;
+}
+
+.data-table .cell--added {
+  color: #16A34A;
+  font-weight: var(--fw-medium);
+}
+
+.data-table .cell--departures {
+  color: var(--color-error);
+  font-weight: var(--fw-medium);
+}
+
+.data-table .cell--high {
+  color: var(--color-error);
+  font-weight: var(--fw-semibold);
+}
+
+.data-table .cell--normal {
+  color: var(--color-text);
+}
+
+.data-table .row--total td {
+  background: var(--color-primary-light);
+  font-weight: var(--fw-semibold);
+  color: var(--color-primary-dark);
+  border-top: 2px solid var(--color-primary);
+  border-bottom: none;
+}
+
+.table-note {
+  margin-top: var(--space-3);
+  font-size: var(--text-xs);
+  color: var(--color-text-muted);
+  padding: 0 var(--space-1);
+}
+
 .chart-empty {
   position: absolute;
   inset: 0;
@@ -688,6 +782,11 @@ input {
   text-align: center;
 }
 .chart-empty svg { opacity: .4; }
+
+#monthly-table-empty {
+  position: static;
+  padding: var(--space-10) var(--space-4);
+}
 
 /* ── Toast ─────────────────────────────────────────────────────────────────── */
 .toast-container {

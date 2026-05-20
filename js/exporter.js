@@ -59,7 +59,28 @@ window.Exporter = (() => {
       summaryData.push([]);
     }
 
-    if (result.byYearMonth.length > 0) {
+    if (result.monthlyHeadcount && result.monthlyHeadcount.length > 0) {
+      summaryData.push(['MONTHLY HEADCOUNT ANALYSIS']);
+      summaryData.push([
+        'Month',
+        'Beginning Count',
+        'Employees Added',
+        'Employee Departures',
+        'Ending Count',
+        'Attrition Rate (%)',
+      ]);
+      for (const row of result.monthlyHeadcount) {
+        summaryData.push([
+          row.label,
+          row.beginCount  !== null ? row.beginCount  : '—',
+          row.added,
+          row.departures,
+          row.endCount    !== null ? row.endCount    : '—',
+          row.attritionRate !== null ? `${row.attritionRate}%` : '—',
+        ]);
+      }
+      summaryData.push([]);
+    } else if (result.byYearMonth.length > 0) {
       summaryData.push(['MONTHLY ATTRITION']);
       summaryData.push(['Month', 'Exits']);
       for (const { label, count } of result.byYearMonth) {
@@ -296,7 +317,47 @@ window.Exporter = (() => {
 
     addPageNumber(2);
 
-    // ── Page 3 — Raw Data ──────────────────────────────────────────────────
+    // ── Page 3 — Monthly Headcount ─────────────────────────────────────────
+    if (result.monthlyHeadcount && result.monthlyHeadcount.length > 0) {
+      doc.addPage();
+      drawHeaderBar();
+
+      const mhY = 25;
+      sectionTitle('MONTHLY HEADCOUNT ANALYSIS', mhY - 4);
+
+      const mhHead = [['Month', 'Beginning Count', 'Employees Added', 'Employee Departures', 'Ending Count', 'Attrition Rate (%)']];
+      const mhBody = result.monthlyHeadcount.map(row => [
+        row.label,
+        row.beginCount    !== null ? row.beginCount.toLocaleString()  : '—',
+        row.added > 0 ? `+${row.added}` : String(row.added),
+        String(row.departures),
+        row.endCount      !== null ? row.endCount.toLocaleString()    : '—',
+        row.attritionRate !== null ? `${row.attritionRate}%`          : '—',
+      ]);
+
+      doc.autoTable({
+        startY:     mhY,
+        head:       mhHead,
+        body:       mhBody,
+        margin:     { left: margin, right: margin },
+        styles:     { fontSize: 8, cellPadding: 3, halign: 'right' },
+        headStyles: { fillColor: PRIMARY, textColor: 255, fontStyle: 'bold' },
+        alternateRowStyles: { fillColor: BG },
+        columnStyles: {
+          0: { halign: 'left', fontStyle: 'bold' },
+          2: { textColor: [22, 163, 74] },
+          3: { textColor: [239, 68, 68] },
+        },
+        didDrawPage(data) {
+          drawHeaderBar();
+          addPageNumber(doc.internal.getNumberOfPages());
+        },
+      });
+
+      addPageNumber(doc.internal.getNumberOfPages());
+    }
+
+    // ── Page — Raw Data ────────────────────────────────────────────────────
     doc.addPage();
     drawHeaderBar();
 
