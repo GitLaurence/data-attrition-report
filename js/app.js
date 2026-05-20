@@ -208,8 +208,14 @@
     renderMonthlyTable(result);
   }
 
-  // ── Monthly Headcount Table ───────────────────────────────────────────────
+  // ── Monthly Headcount Cards ───────────────────────────────────────────────
   const MONTH_LABELS = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+
+  function rateClass(rate) {
+    if (rate === null) return '';
+    const n = parseFloat(rate);
+    return n >= 5 ? 'mhc-rate--high' : n >= 2 ? 'mhc-rate--mid' : 'mhc-rate--low';
+  }
 
   function renderMonthlyTable(result) {
     const container = document.getElementById('monthly-table-container');
@@ -227,7 +233,6 @@
 
     emptyEl.classList.add('hidden');
 
-    // Unique years in the data
     const years = [...new Set(rows.map(r => r.yearMonth.split('-')[0]))].sort();
 
     // ── Filter pills ────────────────────────────────────────────────────────
@@ -241,51 +246,70 @@
       monthPills += `<button class="filter-pill" data-month="${String(i + 1).padStart(2, '0')}">${MONTH_LABELS[i]}</button>`;
     }
 
-    // ── Table rows ─────────────────────────────────────────────────────────
-    const thead = `
-      <thead>
-        <tr>
-          <th>Month</th>
-          <th>Beginning Count</th>
-          <th>Employees Added</th>
-          <th>Employee Departures</th>
-          <th>Ending Count</th>
-          <th>Attrition Rate (%)</th>
-        </tr>
-      </thead>`;
-
-    let tbody = '<tbody>';
+    // ── Month cards ─────────────────────────────────────────────────────────
+    let cards = '';
     for (const row of rows) {
       const [yr, mo] = row.yearMonth.split('-');
-      const begin    = row.beginCount     !== null ? row.beginCount.toLocaleString()     : '—';
-      const end      = row.endCount       !== null ? row.endCount.toLocaleString()       : '—';
-      const rate     = row.attritionRate  !== null ? `${row.attritionRate}%`             : '—';
-      const rateClass = row.attritionRate !== null
-        ? (parseFloat(row.attritionRate) >= 5 ? 'cell--high' : 'cell--normal') : '';
-      const addedFmt  = (row.added > 0 ? '+' : '') + row.added.toLocaleString();
-      tbody += `
-        <tr data-year="${yr}" data-month="${mo}"
-            data-begin="${row.beginCount ?? -1}"
-            data-end="${row.endCount ?? -1}"
-            data-added="${row.added}"
-            data-departures="${row.departures}">
-          <td class="cell--month">${row.label}</td>
-          <td data-label="Beginning Count">${begin}</td>
-          <td data-label="Employees Added" class="${row.added > 0 ? 'cell--added' : ''}">${addedFmt}</td>
-          <td data-label="Departures" class="${row.departures > 0 ? 'cell--departures' : ''}">${row.departures.toLocaleString()}</td>
-          <td data-label="Ending Count">${end}</td>
-          <td data-label="Attrition Rate" class="${rateClass}">${rate}</td>
-        </tr>`;
+      const begin    = row.beginCount    !== null ? row.beginCount.toLocaleString()    : '—';
+      const end      = row.endCount      !== null ? row.endCount.toLocaleString()      : '—';
+      const rateText = row.attritionRate !== null ? `${row.attritionRate}%`            : 'N/A';
+      const addedFmt = (row.added > 0 ? '+' : '') + row.added.toLocaleString();
+
+      cards += `
+        <div class="mhc-card" data-year="${yr}" data-month="${mo}"
+             data-begin="${row.beginCount ?? -1}" data-end="${row.endCount ?? -1}"
+             data-added="${row.added}" data-departures="${row.departures}">
+          <div class="mhc-card__header">
+            <span class="mhc-card__month">${row.label}</span>
+            <span class="mhc-rate ${rateClass(row.attritionRate)}">${rateText}</span>
+          </div>
+          <div class="mhc-card__metrics">
+            <div class="mhc-metric">
+              <span class="mhc-metric__val">${begin}</span>
+              <span class="mhc-metric__lbl">Beginning</span>
+            </div>
+            <div class="mhc-metric mhc-metric--added">
+              <span class="mhc-metric__val">${addedFmt}</span>
+              <span class="mhc-metric__lbl">Added</span>
+            </div>
+            <div class="mhc-metric mhc-metric--dep">
+              <span class="mhc-metric__val">${row.departures.toLocaleString()}</span>
+              <span class="mhc-metric__lbl">Departures</span>
+            </div>
+            <div class="mhc-metric">
+              <span class="mhc-metric__val">${end}</span>
+              <span class="mhc-metric__lbl">Ending</span>
+            </div>
+          </div>
+        </div>`;
     }
-    tbody += `<tr class="row--total" id="monthly-total-row">
-        <td class="cell--month">Summary</td>
-        <td data-label="Beginning Count" id="tot-begin">—</td>
-        <td data-label="Employees Added"  id="tot-added">—</td>
-        <td data-label="Departures"       id="tot-dep">—</td>
-        <td data-label="Ending Count"     id="tot-end">—</td>
-        <td data-label="Attrition Rate"   id="tot-rate">—</td>
-      </tr>`;
-    tbody += '</tbody>';
+
+    // ── Summary card ────────────────────────────────────────────────────────
+    cards += `
+      <div class="mhc-card mhc-card--summary">
+        <div class="mhc-card__header">
+          <span class="mhc-card__month">Summary</span>
+          <span class="mhc-rate" id="sum-rate">—</span>
+        </div>
+        <div class="mhc-card__metrics mhc-card__metrics--row">
+          <div class="mhc-metric">
+            <span class="mhc-metric__val" id="sum-begin">—</span>
+            <span class="mhc-metric__lbl">Beginning</span>
+          </div>
+          <div class="mhc-metric mhc-metric--added">
+            <span class="mhc-metric__val" id="sum-added">—</span>
+            <span class="mhc-metric__lbl">Added</span>
+          </div>
+          <div class="mhc-metric mhc-metric--dep">
+            <span class="mhc-metric__val" id="sum-dep">—</span>
+            <span class="mhc-metric__lbl">Departures</span>
+          </div>
+          <div class="mhc-metric">
+            <span class="mhc-metric__val" id="sum-end">—</span>
+            <span class="mhc-metric__lbl">Ending</span>
+          </div>
+        </div>
+      </div>`;
 
     container.innerHTML = `
       <div class="monthly-table-filters">
@@ -298,50 +322,45 @@
           <div class="filter-pills" id="mhc-month-filter">${monthPills}</div>
         </div>
       </div>
-      <div class="table-scroll">
-        <table class="data-table" id="mhc-table">
-          ${thead}
-          ${tbody}
-        </table>
-      </div>`;
+      <div class="mhc-grid">${cards}</div>`;
 
     // ── Filter logic ────────────────────────────────────────────────────────
-    let activeYear  = 'all';
-    let activeMonth = 'all';
+    let activeYear = 'all', activeMonth = 'all';
 
     function applyFilter() {
-      const dataRows = container.querySelectorAll('#mhc-table tbody tr:not(.row--total)');
+      const monthCards = container.querySelectorAll('.mhc-card:not(.mhc-card--summary)');
       let visBegin = -1, visEnd = -1, visAdded = 0, visDep = 0, firstSet = false;
 
-      for (const tr of dataRows) {
-        const matchY = activeYear  === 'all' || tr.dataset.year  === activeYear;
-        const matchM = activeMonth === 'all' || tr.dataset.month === activeMonth;
-        const visible = matchY && matchM;
-        tr.style.display = visible ? '' : 'none';
+      for (const card of monthCards) {
+        const matchY   = activeYear  === 'all' || card.dataset.year  === activeYear;
+        const matchM   = activeMonth === 'all' || card.dataset.month === activeMonth;
+        const visible  = matchY && matchM;
+        card.style.display = visible ? '' : 'none';
 
         if (visible) {
-          const b = parseInt(tr.dataset.begin);
-          const e = parseInt(tr.dataset.end);
+          const b = parseInt(card.dataset.begin);
+          const e = parseInt(card.dataset.end);
           if (!firstSet && b !== -1) { visBegin = b; firstSet = true; }
           if (e !== -1) visEnd = e;
-          visAdded += parseInt(tr.dataset.added);
-          visDep   += parseInt(tr.dataset.departures);
+          visAdded += parseInt(card.dataset.added);
+          visDep   += parseInt(card.dataset.departures);
         }
       }
 
-      // Update summary row
-      document.getElementById('tot-begin').textContent = visBegin !== -1 ? visBegin.toLocaleString() : '—';
-      document.getElementById('tot-added').textContent = `+${visAdded.toLocaleString()}`;
-      document.getElementById('tot-dep').textContent   = visDep.toLocaleString();
-      document.getElementById('tot-end').textContent   = visEnd  !== -1 ? visEnd.toLocaleString()  : '—';
-      const totRate = (visBegin > 0)
-        ? `${((visDep / visBegin) * 100).toFixed(2)}%` : '—';
-      document.getElementById('tot-rate').textContent  = totRate;
+      const sumRate    = visBegin > 0 ? ((visDep / visBegin) * 100).toFixed(2) : null;
+      const sumRateEl  = document.getElementById('sum-rate');
+      sumRateEl.textContent = sumRate !== null ? `${sumRate}%` : '—';
+      sumRateEl.className   = `mhc-rate ${rateClass(sumRate)}`;
+
+      document.getElementById('sum-begin').textContent = visBegin !== -1 ? visBegin.toLocaleString() : '—';
+      document.getElementById('sum-added').textContent = `+${visAdded.toLocaleString()}`;
+      document.getElementById('sum-dep').textContent   = visDep.toLocaleString();
+      document.getElementById('sum-end').textContent   = visEnd  !== -1 ? visEnd.toLocaleString()  : '—';
     }
 
     function bindPills(containerId, attr) {
       container.querySelector(`#${containerId}`).addEventListener('click', (e) => {
-        const pill = e.target.closest('[data-' + attr + ']');
+        const pill = e.target.closest(`[data-${attr}]`);
         if (!pill) return;
         if (attr === 'year')  activeYear  = pill.dataset.year;
         if (attr === 'month') activeMonth = pill.dataset.month;
@@ -354,7 +373,7 @@
 
     bindPills('mhc-year-filter',  'year');
     bindPills('mhc-month-filter', 'month');
-    applyFilter(); // initialise summary row
+    applyFilter();
   }
 
   function animateValue(el, newText) {
