@@ -17,6 +17,7 @@
   let $dropZone, $fileInput, $btnBrowse;
   let $btnExportExcel, $btnExportPDF, $btnReset;
   let $btnApplyHeadcount, $inputHeadcount;
+  let $btnApplyMonthlyHeadcount, $inputMonthlyHeadcount;
   let $fileBadgeName, $fileBadgeCount;
   let $valTotal, $valPeakMonth, $valPeakDetail, $valAvgRate, $valAvgRateSub;
   let $loadingOverlay, $loadingText;
@@ -32,8 +33,10 @@
     $btnExportExcel   = document.getElementById('btn-export-excel');
     $btnExportPDF     = document.getElementById('btn-export-pdf');
     $btnReset         = document.getElementById('btn-reset');
-    $btnApplyHeadcount = document.getElementById('btn-apply-headcount');
-    $inputHeadcount   = document.getElementById('input-headcount');
+    $btnApplyHeadcount        = document.getElementById('btn-apply-headcount');
+    $inputHeadcount           = document.getElementById('input-headcount');
+    $btnApplyMonthlyHeadcount = document.getElementById('btn-apply-monthly-headcount');
+    $inputMonthlyHeadcount    = document.getElementById('input-monthly-headcount');
     $fileBadgeName    = document.getElementById('file-badge-name');
     $fileBadgeCount   = document.getElementById('file-badge-count');
     $valTotal         = document.getElementById('val-total');
@@ -101,6 +104,11 @@
 
     $btnExportExcel.addEventListener('click', handleExportExcel);
     $btnExportPDF.addEventListener('click',   handleExportPDF);
+
+    $btnApplyMonthlyHeadcount.addEventListener('click', handleMonthlyHeadcountApply);
+    $inputMonthlyHeadcount.addEventListener('keydown', (e) => {
+      if (e.key === 'Enter') handleMonthlyHeadcountApply();
+    });
   }
 
   // Yields to the browser for one paint frame
@@ -164,6 +172,8 @@
       return;
     }
     state.headcount = raw;
+    // Keep the inline monthly input in sync
+    if ($inputMonthlyHeadcount) $inputMonthlyHeadcount.value = raw;
 
     state.analyticsResult = Analytics.compute(state.records, state.headcount);
     state.analyticsResult._records = state.records;
@@ -172,6 +182,25 @@
     updateStatCards(state.analyticsResult);
 
     showToast(`Attrition rate updated using headcount of ${raw.toLocaleString()}.`, 'success');
+  }
+
+  function handleMonthlyHeadcountApply() {
+    const raw = parseInt($inputMonthlyHeadcount.value, 10);
+    if (isNaN(raw) || raw <= 0) {
+      showToast('Please enter a valid starting headcount greater than 0.', 'error');
+      return;
+    }
+    state.headcount = raw;
+    // Keep the top panel input in sync
+    if ($inputHeadcount) $inputHeadcount.value = raw;
+
+    state.analyticsResult = Analytics.compute(state.records, state.headcount);
+    state.analyticsResult._records = state.records;
+
+    Charts.render(state.analyticsResult);
+    updateStatCards(state.analyticsResult);
+
+    showToast(`Monthly headcount analysis updated with starting count of ${raw.toLocaleString()}.`, 'success');
   }
 
   function handleReset() {
@@ -190,6 +219,7 @@
 
     $fileInput.value    = '';
     $inputHeadcount.value = '';
+    $inputMonthlyHeadcount.value = '';
     $fileBadgeName.textContent  = '';
     $fileBadgeCount.textContent = '';
   }
@@ -258,8 +288,6 @@
 
     emptyEl.classList.add('hidden');
 
-    const hasHeadcount = rows.some(r => r.beginCount !== null);
-
     // Totals
     const totalAdded      = rows.reduce((s, r) => s + r.added,      0);
     const totalDepartures = rows.reduce((s, r) => s + r.departures, 0);
@@ -316,8 +344,7 @@
           ${thead}
           ${tbody}
         </table>
-      </div>
-      ${!hasHeadcount ? `<p class="table-note">Enter a starting headcount above and click Apply to calculate Beginning/Ending counts and Attrition Rate.</p>` : ''}`;
+      </div>`;
   }
 
   function animateValue(el, newText) {
