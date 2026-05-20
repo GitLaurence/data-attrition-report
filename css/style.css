@@ -647,8 +647,22 @@ input {
 }
 
 /* ── Monthly Headcount Table ─────────────────────────────────────────────── */
+
+/* Clip the table flush to the card's rounded corners */
+.monthly-table-card {
+  overflow: hidden;
+}
+
+/* Pull the table body edge-to-edge, breaking out of the card's padding */
 .monthly-table-card .chart-card__body--table {
+  margin: 0 calc(-1 * var(--space-6)) calc(-1 * var(--space-6));
   padding: 0 0 var(--space-4);
+}
+
+/* Re-indent the filter pills to align with the card header text */
+.monthly-table-card .monthly-table-filters {
+  padding-left: var(--space-6);
+  padding-right: var(--space-6);
 }
 
 /* Filter pills */
