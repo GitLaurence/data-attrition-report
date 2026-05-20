@@ -209,6 +209,8 @@
   }
 
   // ── Monthly Headcount Table ───────────────────────────────────────────────
+  const MONTH_LABELS = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+
   function renderMonthlyTable(result) {
     const container = document.getElementById('monthly-table-container');
     const emptyEl   = document.getElementById('monthly-table-empty');
@@ -225,11 +227,22 @@
 
     emptyEl.classList.add('hidden');
 
-    // Totals
-    const totalAdded      = rows.reduce((s, r) => s + r.added,      0);
-    const totalDepartures = rows.reduce((s, r) => s + r.departures, 0);
+    // Unique years in the data
+    const years = [...new Set(rows.map(r => r.yearMonth.split('-')[0]))].sort();
 
-    let thead = `
+    // ── Filter pills ────────────────────────────────────────────────────────
+    let yearPills = `<button class="filter-pill filter-pill--active" data-year="all">All</button>`;
+    for (const y of years) {
+      yearPills += `<button class="filter-pill" data-year="${y}">${y}</button>`;
+    }
+
+    let monthPills = `<button class="filter-pill filter-pill--active" data-month="all">All</button>`;
+    for (let i = 0; i < 12; i++) {
+      monthPills += `<button class="filter-pill" data-month="${String(i + 1).padStart(2, '0')}">${MONTH_LABELS[i]}</button>`;
+    }
+
+    // ── Table rows ─────────────────────────────────────────────────────────
+    const thead = `
       <thead>
         <tr>
           <th>Month</th>
@@ -243,45 +256,105 @@
 
     let tbody = '<tbody>';
     for (const row of rows) {
-      const begin  = row.beginCount  !== null ? row.beginCount.toLocaleString()  : '—';
-      const end    = row.endCount    !== null ? row.endCount.toLocaleString()    : '—';
-      const rate   = row.attritionRate !== null ? `${row.attritionRate}%`        : '—';
+      const [yr, mo] = row.yearMonth.split('-');
+      const begin    = row.beginCount     !== null ? row.beginCount.toLocaleString()     : '—';
+      const end      = row.endCount       !== null ? row.endCount.toLocaleString()       : '—';
+      const rate     = row.attritionRate  !== null ? `${row.attritionRate}%`             : '—';
       const rateClass = row.attritionRate !== null
-        ? (parseFloat(row.attritionRate) >= 5 ? 'cell--high' : 'cell--normal')
-        : '';
+        ? (parseFloat(row.attritionRate) >= 5 ? 'cell--high' : 'cell--normal') : '';
+      const addedFmt  = (row.added > 0 ? '+' : '') + row.added.toLocaleString();
       tbody += `
-        <tr>
+        <tr data-year="${yr}" data-month="${mo}"
+            data-begin="${row.beginCount ?? -1}"
+            data-end="${row.endCount ?? -1}"
+            data-added="${row.added}"
+            data-departures="${row.departures}">
           <td class="cell--month">${row.label}</td>
-          <td>${begin}</td>
-          <td class="${row.added > 0 ? 'cell--added' : ''}">${row.added > 0 ? '+' : ''}${row.added.toLocaleString()}</td>
-          <td class="${row.departures > 0 ? 'cell--departures' : ''}">${row.departures.toLocaleString()}</td>
-          <td>${end}</td>
-          <td class="${rateClass}">${rate}</td>
+          <td data-label="Beginning Count">${begin}</td>
+          <td data-label="Employees Added" class="${row.added > 0 ? 'cell--added' : ''}">${addedFmt}</td>
+          <td data-label="Departures" class="${row.departures > 0 ? 'cell--departures' : ''}">${row.departures.toLocaleString()}</td>
+          <td data-label="Ending Count">${end}</td>
+          <td data-label="Attrition Rate" class="${rateClass}">${rate}</td>
         </tr>`;
     }
-
-    // Summary row
-    const lastRow   = rows[rows.length - 1];
-    const finalEnd  = lastRow.endCount  !== null ? lastRow.endCount.toLocaleString()  : '—';
-    const firstBegin = rows[0].beginCount !== null ? rows[0].beginCount.toLocaleString() : '—';
-    tbody += `
-      <tr class="row--total">
-        <td class="cell--month">Total / Final</td>
-        <td>${firstBegin}</td>
-        <td>+${totalAdded.toLocaleString()}</td>
-        <td>${totalDepartures.toLocaleString()}</td>
-        <td>${finalEnd}</td>
-        <td>—</td>
+    tbody += `<tr class="row--total" id="monthly-total-row">
+        <td class="cell--month">Summary</td>
+        <td data-label="Beginning Count" id="tot-begin">—</td>
+        <td data-label="Employees Added"  id="tot-added">—</td>
+        <td data-label="Departures"       id="tot-dep">—</td>
+        <td data-label="Ending Count"     id="tot-end">—</td>
+        <td data-label="Attrition Rate"   id="tot-rate">—</td>
       </tr>`;
     tbody += '</tbody>';
 
     container.innerHTML = `
+      <div class="monthly-table-filters">
+        <div class="filter-group">
+          <span class="filter-group__label">Year</span>
+          <div class="filter-pills" id="mhc-year-filter">${yearPills}</div>
+        </div>
+        <div class="filter-group">
+          <span class="filter-group__label">Month</span>
+          <div class="filter-pills" id="mhc-month-filter">${monthPills}</div>
+        </div>
+      </div>
       <div class="table-scroll">
-        <table class="data-table">
+        <table class="data-table" id="mhc-table">
           ${thead}
           ${tbody}
         </table>
       </div>`;
+
+    // ── Filter logic ────────────────────────────────────────────────────────
+    let activeYear  = 'all';
+    let activeMonth = 'all';
+
+    function applyFilter() {
+      const dataRows = container.querySelectorAll('#mhc-table tbody tr:not(.row--total)');
+      let visBegin = -1, visEnd = -1, visAdded = 0, visDep = 0, firstSet = false;
+
+      for (const tr of dataRows) {
+        const matchY = activeYear  === 'all' || tr.dataset.year  === activeYear;
+        const matchM = activeMonth === 'all' || tr.dataset.month === activeMonth;
+        const visible = matchY && matchM;
+        tr.style.display = visible ? '' : 'none';
+
+        if (visible) {
+          const b = parseInt(tr.dataset.begin);
+          const e = parseInt(tr.dataset.end);
+          if (!firstSet && b !== -1) { visBegin = b; firstSet = true; }
+          if (e !== -1) visEnd = e;
+          visAdded += parseInt(tr.dataset.added);
+          visDep   += parseInt(tr.dataset.departures);
+        }
+      }
+
+      // Update summary row
+      document.getElementById('tot-begin').textContent = visBegin !== -1 ? visBegin.toLocaleString() : '—';
+      document.getElementById('tot-added').textContent = `+${visAdded.toLocaleString()}`;
+      document.getElementById('tot-dep').textContent   = visDep.toLocaleString();
+      document.getElementById('tot-end').textContent   = visEnd  !== -1 ? visEnd.toLocaleString()  : '—';
+      const totRate = (visBegin > 0)
+        ? `${((visDep / visBegin) * 100).toFixed(2)}%` : '—';
+      document.getElementById('tot-rate').textContent  = totRate;
+    }
+
+    function bindPills(containerId, attr) {
+      container.querySelector(`#${containerId}`).addEventListener('click', (e) => {
+        const pill = e.target.closest('[data-' + attr + ']');
+        if (!pill) return;
+        if (attr === 'year')  activeYear  = pill.dataset.year;
+        if (attr === 'month') activeMonth = pill.dataset.month;
+        container.querySelectorAll(`#${containerId} .filter-pill`)
+          .forEach(p => p.classList.remove('filter-pill--active'));
+        pill.classList.add('filter-pill--active');
+        applyFilter();
+      });
+    }
+
+    bindPills('mhc-year-filter',  'year');
+    bindPills('mhc-month-filter', 'month');
+    applyFilter(); // initialise summary row
   }
 
   function animateValue(el, newText) {
