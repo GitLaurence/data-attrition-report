@@ -217,21 +217,27 @@
     return n >= 5 ? 'mhc-rate--high' : n >= 2 ? 'mhc-rate--mid' : 'mhc-rate--low';
   }
 
+  // Cached once, since the first data-bearing render replaces #monthly-table-container's
+  // innerHTML wholesale — permanently removing the static empty-state placeholder node.
+  let cachedEmptyStateHTML = null;
+
   function renderMonthlyTable(result) {
     const container = document.getElementById('monthly-table-container');
-    const emptyEl   = document.getElementById('monthly-table-empty');
     if (!container) return;
+
+    if (cachedEmptyStateHTML === null) {
+      const staticEmptyEl = document.getElementById('monthly-table-empty');
+      if (staticEmptyEl) cachedEmptyStateHTML = staticEmptyEl.outerHTML;
+    }
 
     const rows = result.monthlyHeadcount || [];
 
     if (rows.length === 0) {
-      container.innerHTML = '';
-      container.appendChild(emptyEl);
-      emptyEl.classList.remove('hidden');
+      container.innerHTML = cachedEmptyStateHTML || '';
+      const emptyEl = document.getElementById('monthly-table-empty');
+      if (emptyEl) emptyEl.classList.remove('hidden');
       return;
     }
-
-    emptyEl.classList.add('hidden');
 
     const years = [...new Set(rows.map(r => r.yearMonth.split('-')[0]))].sort();
 
@@ -484,12 +490,18 @@
     warning: `<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5"><path stroke-linecap="round" stroke-linejoin="round" d="M12 9v3.75m-9.303 3.376c-.866 1.5.217 3.374 1.948 3.374h14.71c1.73 0 2.813-1.874 1.948-3.374L13.949 3.378c-.866-1.5-3.032-1.5-3.898 0L2.697 16.126zM12 15.75h.007v.008H12v-.008z"/></svg>`,
   };
 
+  function escapeHtml(str) {
+    const div = document.createElement('div');
+    div.textContent = String(str);
+    return div.innerHTML;
+  }
+
   function showToast(message, type = 'success', duration = 4000) {
     const toast = document.createElement('div');
     toast.className = `toast toast--${type}`;
     toast.innerHTML = `
       <span class="toast__icon">${TOAST_ICONS[type] || ''}</span>
-      <span class="toast__body">${message}</span>
+      <span class="toast__body">${escapeHtml(message)}</span>
       <button class="toast__close" aria-label="Dismiss">
         <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5"><path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12"/></svg>
       </button>`;

@@ -8,6 +8,12 @@ window.Exporter = (() => {
     'Resignation', 'Termination', 'Retirement', 'Redundancy', 'End of Contract', 'Other'
   ];
 
+  // Formats a Date using its local calendar date (avoids the day-shift that
+  // toISOString() introduces for timezones ahead of UTC).
+  function toLocalISODate(d) {
+    return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
+  }
+
   // ── Excel Export ────────────────────────────────────────────────────────────
 
   function toExcel(records, result) {
@@ -106,8 +112,8 @@ window.Exporter = (() => {
     const rawData = records.map(r => ({
       Name:           r.name,
       Department:     r.department,
-      'Date Hired':   r.dateHired ? r.dateHired.toISOString().split('T')[0] : '',
-      'Exit Date':    r.exitDate  ? r.exitDate.toISOString().split('T')[0]  : '',
+      'Date Hired':   r.dateHired ? toLocalISODate(r.dateHired) : '',
+      'Exit Date':    r.exitDate  ? toLocalISODate(r.exitDate)  : '',
       Reason:         r.reason,
       Remarks:        r.remarks || '',
       Year:           r.year    || '',
@@ -367,8 +373,8 @@ window.Exporter = (() => {
       ? result._records.map(r => [
           r.name,
           r.department,
-          r.dateHired ? r.dateHired.toISOString().split('T')[0] : '—',
-          r.exitDate  ? r.exitDate.toISOString().split('T')[0]  : '—',
+          r.dateHired ? toLocalISODate(r.dateHired) : '—',
+          r.exitDate  ? toLocalISODate(r.exitDate)  : '—',
           r.reason,
           r.remarks || '—',
           r.year  || '—',
