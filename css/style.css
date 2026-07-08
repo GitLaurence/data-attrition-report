@@ -30,7 +30,7 @@
   /* Text */
   --color-text:          #111827;
   --color-text-secondary:#6B7280;
-  --color-text-muted:    #9CA3AF;
+  --color-text-muted:    #5F6B7A;
 
   /* Shadows */
   --shadow-card:  0 1px 3px rgba(0,0,0,.06), 0 4px 16px rgba(0,0,0,.04);
@@ -514,8 +514,10 @@ input {
   color: var(--color-text-muted);
   flex-shrink: 0;
 }
-.tooltip:hover {
+.tooltip:hover,
+.tooltip:focus-visible {
   color: var(--color-primary);
+  outline: none;
 }
 
 .tooltip::before,
@@ -558,7 +560,9 @@ input {
 }
 
 .tooltip:hover::before,
-.tooltip:hover::after {
+.tooltip:hover::after,
+.tooltip:focus-visible::before,
+.tooltip:focus-visible::after {
   opacity: 1;
 }
 

@@ -52,6 +52,7 @@ window.Parser = (() => {
 
   const MIN_YEAR = 1970;
   const MAX_YEAR = new Date().getFullYear() + 2;
+  const MAX_FILE_SIZE = 25 * 1024 * 1024; // 25 MB — generous for a spreadsheet, guards against the tab hanging on huge uploads
 
   function normalizeReason(raw) {
     if (!raw) return 'Other';
@@ -109,8 +110,22 @@ window.Parser = (() => {
     } else if (typeof value === 'string') {
       const trimmed = value.trim();
       if (!trimmed) return null;
+
       const tmp = new Date(trimmed);
-      d = isNaN(tmp.getTime()) ? null : tmp;
+      // A bare numeric string like "44000" parses as the (implausible) year 44000 rather
+      // than Invalid Date, so also require a sane year before trusting native parsing.
+      const nativeOk = !isNaN(tmp.getTime()) &&
+        tmp.getFullYear() >= MIN_YEAR && tmp.getFullYear() <= MAX_YEAR;
+
+      if (nativeOk) {
+        d = tmp;
+      } else if (/^\d+(\.\d+)?$/.test(trimmed) && Number(trimmed) > 1) {
+        // Text-formatted cell holding a raw Excel serial date number
+        try {
+          const parsed = XLSX.SSF.parse_date_code(Number(trimmed));
+          if (parsed) d = new Date(parsed.y, parsed.m - 1, parsed.d);
+        } catch (_) {}
+      }
     }
 
     if (!d) return null;
@@ -149,6 +164,13 @@ window.Parser = (() => {
     return new Promise((resolve, reject) => {
       if (!/\.(xlsx|xls)$/i.test(file.name)) {
         reject(new Error('Please upload an Excel file (.xlsx or .xls).'));
+        return;
+      }
+
+      if (file.size > MAX_FILE_SIZE) {
+        reject(new Error(
+          `File is too large (${(file.size / (1024 * 1024)).toFixed(1)} MB). Please upload a file under ${MAX_FILE_SIZE / (1024 * 1024)} MB.`
+        ));
         return;
       }
 
@@ -221,7 +243,9 @@ window.Parser = (() => {
               }
 
               const record = buildRecord(row, colMap);
-              if (!record.exitDate) skippedDateCount++;
+              // Only count as "unreadable" when a date was actually supplied but failed
+              // to parse — a blank Exit Date is the expected, valid shape for active employees.
+              if (dateVal && !record.exitDate) skippedDateCount++;
               records.push(record);
             }
 
@@ -233,6 +257,12 @@ window.Parser = (() => {
             if (skippedDateCount > 0) {
               warnings.push(
                 `${skippedDateCount} row(s) had unreadable Exit Date values and will be excluded from time-based charts.`
+              );
+            }
+
+            if (skippedEmptyCount > 0) {
+              warnings.push(
+                `${skippedEmptyCount} row(s) had no Name and no Exit Date and were skipped entirely.`
               );
             }
 

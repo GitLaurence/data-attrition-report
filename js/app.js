@@ -54,6 +54,7 @@
     if (typeof XLSX === 'undefined')        missing.push('SheetJS (Excel parsing)');
     if (typeof Chart === 'undefined')       missing.push('Chart.js (charts)');
     if (typeof window.jspdf === 'undefined') missing.push('jsPDF (PDF export)');
+    else if (typeof window.jspdf.jsPDF.API.autoTable !== 'function') missing.push('jsPDF-AutoTable (PDF tables)');
 
     if (missing.length) {
       showToast(
@@ -187,18 +188,22 @@
   }
 
   function handleExportExcel() {
-    if (!state.records || !state.analyticsResult) return;
+    if (!state.records || !state.analyticsResult || $btnExportExcel.disabled) return;
+    $btnExportExcel.disabled = true;
     try {
       Exporter.toExcel(state.records, state.analyticsResult);
       showToast('Excel file downloaded.', 'success');
     } catch (err) {
       showToast('Failed to export Excel: ' + err.message, 'error');
+    } finally {
+      $btnExportExcel.disabled = false;
     }
   }
 
   function handleExportPDF() {
     if (!state.analyticsResult) return;
     showLoading(true, 'Generating PDF…');
+    $btnExportPDF.disabled = true;
     // Defer slightly so the overlay renders before the synchronous PDF build
     setTimeout(() => {
       try {
@@ -210,6 +215,7 @@
         showToast('Failed to export PDF: ' + err.message, 'error');
       } finally {
         showLoading(false);
+        $btnExportPDF.disabled = false;
       }
     }, 50);
   }

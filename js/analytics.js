@@ -31,7 +31,7 @@ window.Analytics = (() => {
       return {
         totalExits: 0,
         peakMonth: { label: '—', count: 0, pct: '0.0' },
-        avgAttritionRate: { value: 0, isRate: false },
+        avgAttritionRate: { value: 0 },
         byYearByReason: new Map(),
         byYearMonth: [],
         monthlyHeadcount: [],
@@ -181,7 +181,7 @@ window.Analytics = (() => {
     if (byYearMonth.length > 0) {
       let peak = byYearMonth[0];
       for (const entry of byYearMonth) {
-        if (entry.count >= peak.count) peak = entry;
+        if (entry.count > peak.count) peak = entry;
       }
       peakMonth = {
         label: peak.label,
@@ -197,12 +197,9 @@ window.Analytics = (() => {
 
     if (years.length > 0) {
       const avg = totalExits / years.length;
-      avgAttritionRate = {
-        value:  Math.round(avg * 10) / 10,
-        isRate: false,
-      };
+      avgAttritionRate = { value: Math.round(avg * 10) / 10 };
     } else {
-      avgAttritionRate = { value: totalExits, isRate: false };
+      avgAttritionRate = { value: totalExits };
     }
 
     return {

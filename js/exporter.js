@@ -38,9 +38,7 @@ window.Exporter = (() => {
     ]);
     summaryData.push([
       'Avg Attrition Rate',
-      result.avgAttritionRate.isRate
-        ? `${result.avgAttritionRate.value}%`
-        : `${result.avgAttritionRate.value} exits / year`,
+      `${result.avgAttritionRate.value} exits / year`,
     ]);
     summaryData.push([]);
 
@@ -200,9 +198,7 @@ window.Exporter = (() => {
         },
         {
           label: 'AVG ATTRITION RATE',
-          value: result.avgAttritionRate.isRate
-            ? `${result.avgAttritionRate.value}%`
-            : `${result.avgAttritionRate.value}/yr`,
+          value: `${result.avgAttritionRate.value}/yr`,
           color: [162, 79, 247],
         },
       ];

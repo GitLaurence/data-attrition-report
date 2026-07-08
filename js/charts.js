@@ -216,7 +216,7 @@ window.Charts = (() => {
         ctx.fillStyle    = '#111827';
         ctx.fillText(total.toLocaleString(), cx, cy - 10);
         ctx.font         = "400 0.7rem 'Inter', sans-serif";
-        ctx.fillStyle    = '#9CA3AF';
+        ctx.fillStyle    = '#5F6B7A';
         ctx.fillText('Total Exits', cx, cy + 12);
         ctx.restore();
       },
