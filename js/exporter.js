@@ -17,6 +17,10 @@ window.Exporter = (() => {
   // ── Excel Export ────────────────────────────────────────────────────────────
 
   function toExcel(records, result) {
+    if (typeof XLSX === 'undefined') {
+      throw new Error('The Excel library failed to load. Check your internet connection and reload the page.');
+    }
+
     const wb = XLSX.utils.book_new();
 
     // ── Summary Sheet ──────────────────────────────────────────────────────
@@ -134,6 +138,10 @@ window.Exporter = (() => {
   // ── PDF Export ──────────────────────────────────────────────────────────────
 
   function toPDF(result, chartImages, fileName) {
+    if (typeof window.jspdf === 'undefined') {
+      throw new Error('The PDF library failed to load. Check your internet connection and reload the page.');
+    }
+
     const { jsPDF } = window.jspdf;
     const doc = new jsPDF({ orientation: 'landscape', unit: 'mm', format: 'a4' });
     const pageW  = doc.internal.pageSize.getWidth();

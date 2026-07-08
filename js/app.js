@@ -42,7 +42,27 @@
     $toastContainer   = document.getElementById('toast-container');
 
     bindEvents();
+    checkRequiredLibraries();
   });
+
+  // ── Library availability check ───────────────────────────────────────────
+  // All parsing/charting/export libraries load from CDNs; warn early (rather
+  // than crash later) if any failed to load, e.g. offline or blocked by a
+  // restrictive network/ad-blocker.
+  function checkRequiredLibraries() {
+    const missing = [];
+    if (typeof XLSX === 'undefined')        missing.push('SheetJS (Excel parsing)');
+    if (typeof Chart === 'undefined')       missing.push('Chart.js (charts)');
+    if (typeof window.jspdf === 'undefined') missing.push('jsPDF (PDF export)');
+
+    if (missing.length) {
+      showToast(
+        `Some required libraries failed to load: ${missing.join(', ')}. Check your internet connection and reload the page.`,
+        'error',
+        0
+      );
+    }
+  }
 
   // ── Event binding ─────────────────────────────────────────────────────────
   function bindEvents() {
@@ -514,7 +534,9 @@
     }
 
     toast.querySelector('.toast__close').addEventListener('click', dismiss);
-    setTimeout(dismiss, duration);
+    // duration of 0 makes the toast persistent until manually dismissed —
+    // used for errors the user needs to actively notice, e.g. a failed CDN load.
+    if (duration > 0) setTimeout(dismiss, duration);
   }
 
 })();

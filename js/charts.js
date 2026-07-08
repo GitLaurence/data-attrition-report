@@ -18,20 +18,26 @@ window.Charts = (() => {
   let lineChart     = null;
   let doughnutChart = null;
 
-  // Set global Chart.js defaults once
-  Chart.defaults.font.family = "'Inter', system-ui, sans-serif";
-  Chart.defaults.font.size   = 12;
-  Chart.defaults.color       = '#6B7280';
-  Chart.defaults.plugins.legend.labels.boxWidth  = 12;
-  Chart.defaults.plugins.legend.labels.boxHeight = 12;
-  Chart.defaults.plugins.legend.labels.padding   = 16;
-  Chart.defaults.plugins.tooltip.backgroundColor = '#0F1629';
-  Chart.defaults.plugins.tooltip.titleColor      = '#FFFFFF';
-  Chart.defaults.plugins.tooltip.bodyColor       = '#A8B4CC';
-  Chart.defaults.plugins.tooltip.padding         = 12;
-  Chart.defaults.plugins.tooltip.cornerRadius    = 8;
-  Chart.defaults.plugins.tooltip.displayColors   = true;
-  Chart.defaults.plugins.tooltip.boxPadding      = 4;
+  // Chart.js is loaded from a CDN — if the request was blocked (offline, ad-blocker,
+  // restrictive network), skip global config instead of crashing this whole module.
+  const chartLibAvailable = typeof Chart !== 'undefined';
+
+  if (chartLibAvailable) {
+    // Set global Chart.js defaults once
+    Chart.defaults.font.family = "'Inter', system-ui, sans-serif";
+    Chart.defaults.font.size   = 12;
+    Chart.defaults.color       = '#6B7280';
+    Chart.defaults.plugins.legend.labels.boxWidth  = 12;
+    Chart.defaults.plugins.legend.labels.boxHeight = 12;
+    Chart.defaults.plugins.legend.labels.padding   = 16;
+    Chart.defaults.plugins.tooltip.backgroundColor = '#0F1629';
+    Chart.defaults.plugins.tooltip.titleColor      = '#FFFFFF';
+    Chart.defaults.plugins.tooltip.bodyColor       = '#A8B4CC';
+    Chart.defaults.plugins.tooltip.padding         = 12;
+    Chart.defaults.plugins.tooltip.cornerRadius    = 8;
+    Chart.defaults.plugins.tooltip.displayColors   = true;
+    Chart.defaults.plugins.tooltip.boxPadding      = 4;
+  }
 
   function destroy() {
     if (barChart)      { barChart.destroy();      barChart      = null; }
@@ -56,7 +62,7 @@ window.Charts = (() => {
     const canvas = document.getElementById('chart-bar');
     if (!canvas) return;
 
-    const hasData = result.years.length > 0;
+    const hasData = chartLibAvailable && result.years.length > 0;
     showEmpty('chart-bar', 'chart-bar-empty', !hasData);
     if (!hasData) return;
 
@@ -123,7 +129,7 @@ window.Charts = (() => {
     const canvas = document.getElementById('chart-line');
     if (!canvas) return;
 
-    const hasData = result.byYearMonth.length > 0;
+    const hasData = chartLibAvailable && result.byYearMonth.length > 0;
     showEmpty('chart-line', 'chart-line-empty', !hasData);
     if (!hasData) return;
 
@@ -188,7 +194,7 @@ window.Charts = (() => {
     const canvas = document.getElementById('chart-doughnut');
     if (!canvas) return;
 
-    const hasData = result.byReason.size > 0;
+    const hasData = chartLibAvailable && result.byReason.size > 0;
     showEmpty('chart-doughnut', 'chart-doughnut-empty', !hasData);
     if (!hasData) return;
 
@@ -281,6 +287,6 @@ window.Charts = (() => {
     };
   }
 
-  return { render, destroy, getImages };
+  return { render, destroy, getImages, isAvailable: () => chartLibAvailable };
 
 })();

@@ -152,6 +152,11 @@ window.Parser = (() => {
         return;
       }
 
+      if (typeof XLSX === 'undefined') {
+        reject(new Error('The Excel parsing library failed to load. Check your internet connection and reload the page.'));
+        return;
+      }
+
       const reader = new FileReader();
       reader.onerror = () => reject(new Error('Failed to read file. Please try again.'));
 
