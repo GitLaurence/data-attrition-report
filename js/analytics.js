@@ -193,9 +193,24 @@ window.Analytics = (() => {
     }
 
     // ── avgAttritionRate ────────────────────────────────────────────────────
+    // When Date Hired data lets us derive a beginning headcount per month, report
+    // the mean of each month's attrition rate (departures ÷ beginning headcount).
+    // The very first tracked month never has a beginning headcount by definition,
+    // so it's excluded along with any other month lacking headcount data.
+    // Otherwise fall back to a plain average of exits per year.
     let avgAttritionRate;
 
-    if (years.length > 0) {
+    const monthlyRates = monthlyHeadcount
+      .filter(row => row.attritionRate !== null)
+      .map(row => parseFloat(row.attritionRate));
+
+    if (monthlyRates.length > 0) {
+      const meanRate = monthlyRates.reduce((sum, r) => sum + r, 0) / monthlyRates.length;
+      avgAttritionRate = {
+        value:  meanRate.toFixed(2),
+        isRate: true,
+      };
+    } else if (years.length > 0) {
       const avg = totalExits / years.length;
       avgAttritionRate = {
         value:  Math.round(avg * 10) / 10,

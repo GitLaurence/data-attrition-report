@@ -127,7 +127,7 @@ data-attrition-report/
 |---|---|
 | **Total Exits** | Count of all employee separation records found in the uploaded file. |
 | **Peak Month** | The calendar month with the highest number of exits, with its count and share of all exits. |
-| **Avg Attrition Rate** | Average exits per year across all years in the data. |
+| **Avg Attrition Rate** | Average of each month's attrition rate (departures ÷ beginning headcount), as a %, when Date Hired data is available. Otherwise, the average number of exits per year across all years in the data. |
 
 Hover the **ⓘ** icon on any card to see a tooltip explanation directly in the app.
 

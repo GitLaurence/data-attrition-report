@@ -222,8 +222,12 @@
       ? `${result.peakMonth.count} exits · ${result.peakMonth.pct}% of total`
       : '';
 
-    animateValue($valAvgRate, `${result.avgAttritionRate.value}`);
-    $valAvgRateSub.textContent = 'avg exits per year';
+    animateValue($valAvgRate, result.avgAttritionRate.isRate
+      ? `${result.avgAttritionRate.value}%`
+      : `${result.avgAttritionRate.value}`);
+    $valAvgRateSub.textContent = result.avgAttritionRate.isRate
+      ? 'avg monthly rate'
+      : 'avg exits per year';
 
     renderMonthlyTable(result);
   }
