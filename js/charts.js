@@ -14,9 +14,16 @@ window.Charts = (() => {
     'Other':            '#9CA3AF',
   };
 
-  let barChart      = null;
-  let lineChart     = null;
-  let doughnutChart = null;
+  // Cycled for department bars, which — unlike exit reasons — aren't a fixed set
+  const DEPARTMENT_PALETTE = [
+    '#4F6EF7', '#F7A94F', '#4FC7F7', '#A24FF7', '#F75F4F',
+    '#2DBE8E', '#F7CE4F', '#6B7EF7', '#F787C2', '#9CA3AF',
+  ];
+
+  let barChart        = null;
+  let lineChart       = null;
+  let doughnutChart   = null;
+  let departmentChart = null;
 
   // Chart.js is loaded from a CDN — if the request was blocked (offline, ad-blocker,
   // restrictive network), skip global config instead of crashing this whole module.
@@ -40,9 +47,10 @@ window.Charts = (() => {
   }
 
   function destroy() {
-    if (barChart)      { barChart.destroy();      barChart      = null; }
-    if (lineChart)     { lineChart.destroy();     lineChart     = null; }
-    if (doughnutChart) { doughnutChart.destroy(); doughnutChart = null; }
+    if (barChart)        { barChart.destroy();        barChart        = null; }
+    if (lineChart)       { lineChart.destroy();       lineChart       = null; }
+    if (doughnutChart)   { doughnutChart.destroy();   doughnutChart   = null; }
+    if (departmentChart) { departmentChart.destroy(); departmentChart = null; }
   }
 
   function showEmpty(canvasId, emptyId, isEmpty) {
@@ -272,18 +280,80 @@ window.Charts = (() => {
     });
   }
 
+  function renderDepartment(result) {
+    const canvas = document.getElementById('chart-department');
+    if (!canvas) return;
+
+    const hasData = chartLibAvailable && result.byDepartment && result.byDepartment.size > 0;
+    showEmpty('chart-department', 'chart-department-empty', !hasData);
+    if (!hasData) return;
+
+    const entries = [...result.byDepartment.entries()];
+    const labels  = entries.map(([dept]) => dept);
+    const data    = entries.map(([, count]) => count);
+    const colors  = labels.map((_, i) => DEPARTMENT_PALETTE[i % DEPARTMENT_PALETTE.length]);
+    const total   = result.totalExits;
+
+    // Give the canvas enough height to keep bars readable regardless of department count
+    const bodyEl = canvas.closest('.chart-card__body');
+    if (bodyEl) bodyEl.style.height = `${Math.max(320, labels.length * 34 + 60)}px`;
+
+    departmentChart = new Chart(canvas, {
+      type: 'bar',
+      data: {
+        labels,
+        datasets: [{
+          data,
+          backgroundColor: colors,
+          borderRadius:    4,
+          borderSkipped:   'left',
+        }],
+      },
+      options: {
+        indexAxis:           'y',
+        responsive:          true,
+        maintainAspectRatio: false,
+        plugins: {
+          legend: { display: false },
+          tooltip: {
+            callbacks: {
+              label(item) {
+                const val = item.parsed.x;
+                const pct = total > 0 ? ((val / total) * 100).toFixed(1) : 0;
+                return ` ${val} exit${val !== 1 ? 's' : ''} (${pct}%)`;
+              },
+            },
+          },
+        },
+        scales: {
+          x: {
+            beginAtZero: true,
+            grid:        { color: '#E4E8F0' },
+            border:      { dash: [4, 4] },
+            ticks:       { precision: 0 },
+          },
+          y: {
+            grid: { display: false },
+          },
+        },
+      },
+    });
+  }
+
   function render(result) {
     destroy();
     renderBar(result);
     renderLine(result);
     renderDoughnut(result);
+    renderDepartment(result);
   }
 
   function getImages() {
     return {
-      bar:      barChart      ? barChart.toBase64Image('image/png', 1)      : null,
-      line:     lineChart     ? lineChart.toBase64Image('image/png', 1)     : null,
-      doughnut: doughnutChart ? doughnutChart.toBase64Image('image/png', 1) : null,
+      bar:        barChart        ? barChart.toBase64Image('image/png', 1)        : null,
+      line:       lineChart       ? lineChart.toBase64Image('image/png', 1)       : null,
+      doughnut:   doughnutChart   ? doughnutChart.toBase64Image('image/png', 1)   : null,
+      department: departmentChart ? departmentChart.toBase64Image('image/png', 1) : null,
     };
   }
 

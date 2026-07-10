@@ -36,8 +36,10 @@ window.Analytics = (() => {
         byYearMonth: [],
         monthlyHeadcount: [],
         byReason: new Map(),
+        byDepartment: new Map(),
         years: [],
         reasons: [],
+        departments: [],
       };
     }
 
@@ -53,6 +55,18 @@ window.Analytics = (() => {
     );
 
     const reasons = [...sortedByReason.keys()];
+
+    // ── byDepartment (all records, regardless of date) ──────────────────────
+    const byDepartment = new Map();
+    for (const r of records) {
+      byDepartment.set(r.department, (byDepartment.get(r.department) || 0) + 1);
+    }
+
+    const sortedByDepartment = new Map(
+      [...byDepartment.entries()].sort((a, b) => b[1] - a[1])
+    );
+
+    const departments = [...sortedByDepartment.keys()];
 
     // ── timed records only ──────────────────────────────────────────────────
     const timed = records.filter(r => r.yearMonth !== null);
@@ -213,8 +227,10 @@ window.Analytics = (() => {
       byYearMonth,
       monthlyHeadcount,
       byReason: sortedByReason,
+      byDepartment: sortedByDepartment,
       years,
       reasons,
+      departments,
     };
   }
 

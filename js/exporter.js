@@ -108,6 +108,18 @@ window.Exporter = (() => {
       summaryData.push([reason, count, pct]);
     }
 
+    if (result.byDepartment && result.byDepartment.size > 0) {
+      summaryData.push([]);
+      summaryData.push(['ATTRITION BY DEPARTMENT']);
+      summaryData.push(['Department', 'Count', 'Percentage']);
+      for (const [department, count] of result.byDepartment.entries()) {
+        const pct = result.totalExits > 0
+          ? ((count / result.totalExits) * 100).toFixed(1) + '%'
+          : '0.0%';
+        summaryData.push([department, count, pct]);
+      }
+    }
+
     const summarySheet = XLSX.utils.aoa_to_sheet(summaryData);
     summarySheet['!cols'] = [{ wch: 28 }, { wch: 18 }, { wch: 18 }, { wch: 18 }, { wch: 18 }, { wch: 18 }, { wch: 10 }];
     XLSX.utils.book_append_sheet(wb, summarySheet, 'Summary');
@@ -362,6 +374,42 @@ window.Exporter = (() => {
           2: { textColor: [22, 163, 74] },
           3: { textColor: [239, 68, 68] },
         },
+        didDrawPage(data) {
+          drawHeaderBar();
+          addPageNumber(doc.internal.getNumberOfPages());
+        },
+      });
+
+      addPageNumber(doc.internal.getNumberOfPages());
+    }
+
+    // ── Page — Department Breakdown ────────────────────────────────────────
+    if (result.byDepartment && result.byDepartment.size > 0) {
+      doc.addPage();
+      drawHeaderBar();
+
+      const deptY = 25;
+      sectionTitle('ATTRITION BY DEPARTMENT', deptY - 4);
+
+      if (chartImages.department) {
+        doc.addImage(chartImages.department, 'PNG', margin, deptY, contentW * 0.55, 90);
+      }
+
+      const deptHead = [['Department', 'Count', 'Percentage']];
+      const deptBody = [...result.byDepartment.entries()].map(([department, count]) => [
+        department,
+        String(count),
+        result.totalExits > 0 ? `${((count / result.totalExits) * 100).toFixed(1)}%` : '0.0%',
+      ]);
+
+      doc.autoTable({
+        startY:     deptY,
+        margin:     { left: margin + (chartImages.department ? contentW * 0.6 : 0), right: margin },
+        head:       deptHead,
+        body:       deptBody,
+        styles:     { fontSize: 8, cellPadding: 3 },
+        headStyles: { fillColor: PRIMARY, textColor: 255, fontStyle: 'bold' },
+        alternateRowStyles: { fillColor: BG },
         didDrawPage(data) {
           drawHeaderBar();
           addPageNumber(doc.internal.getNumberOfPages());
