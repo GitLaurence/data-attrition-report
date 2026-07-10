@@ -14,9 +14,10 @@ window.Charts = (() => {
     'Other':            '#9CA3AF',
   };
 
-  let barChart      = null;
-  let lineChart     = null;
-  let doughnutChart = null;
+  let barChart        = null;
+  let lineChart       = null;
+  let doughnutChart   = null;
+  let departmentChart = null;
 
   // Chart.js is loaded from a CDN — if the request was blocked (offline, ad-blocker,
   // restrictive network), skip global config instead of crashing this whole module.
@@ -40,9 +41,10 @@ window.Charts = (() => {
   }
 
   function destroy() {
-    if (barChart)      { barChart.destroy();      barChart      = null; }
-    if (lineChart)     { lineChart.destroy();     lineChart     = null; }
-    if (doughnutChart) { doughnutChart.destroy(); doughnutChart = null; }
+    if (barChart)        { barChart.destroy();        barChart        = null; }
+    if (lineChart)       { lineChart.destroy();       lineChart       = null; }
+    if (doughnutChart)   { doughnutChart.destroy();   doughnutChart   = null; }
+    if (departmentChart) { departmentChart.destroy(); departmentChart = null; }
   }
 
   function showEmpty(canvasId, emptyId, isEmpty) {
@@ -272,18 +274,87 @@ window.Charts = (() => {
     });
   }
 
+  const DEPARTMENT_TOP_N = 10;
+
+  function renderDepartment(result) {
+    const canvas = document.getElementById('chart-department');
+    if (!canvas) return;
+
+    const hasData = chartLibAvailable && result.byDepartment.size > 0;
+    showEmpty('chart-department', 'chart-department-empty', !hasData);
+    if (!hasData) return;
+
+    const entries = [...result.byDepartment.entries()];
+    const top     = entries.slice(0, DEPARTMENT_TOP_N);
+    const rest    = entries.slice(DEPARTMENT_TOP_N);
+    if (rest.length) {
+      top.push(['Other departments', rest.reduce((s, [, c]) => s + c, 0)]);
+    }
+
+    // Chart.js draws category axes top-to-bottom in array order; reverse so
+    // the highest count renders at the top of a horizontal bar chart.
+    const labels = top.map(([dept]) => dept).reverse();
+    const data   = top.map(([, count]) => count).reverse();
+    const total  = result.totalExits;
+
+    departmentChart = new Chart(canvas, {
+      type: 'bar',
+      data: {
+        labels,
+        datasets: [{
+          label:           'Exits',
+          data,
+          backgroundColor: '#4F6EF7',
+          borderRadius:    4,
+          borderSkipped:   'left',
+          maxBarThickness: 28,
+        }],
+      },
+      options: {
+        indexAxis:           'y',
+        responsive:          true,
+        maintainAspectRatio: false,
+        plugins: {
+          legend: { display: false },
+          tooltip: {
+            callbacks: {
+              label(item) {
+                const val = item.parsed.x;
+                const pct = total > 0 ? ((val / total) * 100).toFixed(1) : 0;
+                return ` ${val} exit${val !== 1 ? 's' : ''} (${pct}%)`;
+              },
+            },
+          },
+        },
+        scales: {
+          x: {
+            beginAtZero: true,
+            grid:        { color: '#E4E8F0' },
+            border:      { dash: [4, 4] },
+            ticks:       { precision: 0 },
+          },
+          y: {
+            grid: { display: false },
+          },
+        },
+      },
+    });
+  }
+
   function render(result) {
     destroy();
     renderBar(result);
     renderLine(result);
     renderDoughnut(result);
+    renderDepartment(result);
   }
 
   function getImages() {
     return {
-      bar:      barChart      ? barChart.toBase64Image('image/png', 1)      : null,
-      line:     lineChart     ? lineChart.toBase64Image('image/png', 1)     : null,
-      doughnut: doughnutChart ? doughnutChart.toBase64Image('image/png', 1) : null,
+      bar:        barChart        ? barChart.toBase64Image('image/png', 1)        : null,
+      line:       lineChart       ? lineChart.toBase64Image('image/png', 1)       : null,
+      doughnut:   doughnutChart   ? doughnutChart.toBase64Image('image/png', 1)   : null,
+      department: departmentChart ? departmentChart.toBase64Image('image/png', 1) : null,
     };
   }
 

@@ -235,6 +235,23 @@
 
       </div>
 
+      <!-- Attrition by Department -->
+      <div class="chart-card chart-card--full">
+        <div class="chart-card__header">
+          <div>
+            <h3 class="chart-card__title">Attrition by Department</h3>
+            <p class="chart-card__sub">Total exits per department, all-time</p>
+          </div>
+        </div>
+        <div class="chart-card__body chart-card__body--department">
+          <canvas id="chart-department"></canvas>
+          <div class="chart-empty hidden" id="chart-department-empty">
+            <svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.5"><path stroke-linecap="round" stroke-linejoin="round" d="M2.25 21h19.5m-18-18v18m10.5-18v18m6-13.5V21M6.75 6.75h.75m-.75 3h.75m-.75 3h.75m3-6h.75m-.75 3h.75m-.75 3h.75M6 21v-3.375c0-.621.504-1.125 1.125-1.125h2.25c.621 0 1.125.504 1.125 1.125V21"/></svg>
+            <p>No department data available — check that the Department column is present and valid.</p>
+          </div>
+        </div>
+      </div>
+
       <!-- Monthly Headcount Analysis -->
       <div class="chart-card chart-card--full monthly-table-card" id="monthly-table-card">
         <div class="chart-card__header">

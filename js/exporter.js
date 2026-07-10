@@ -107,6 +107,18 @@ window.Exporter = (() => {
         : '0.0%';
       summaryData.push([reason, count, pct]);
     }
+    summaryData.push([]);
+
+    if (result.byDepartment && result.byDepartment.size > 0) {
+      summaryData.push(['DEPARTMENT BREAKDOWN']);
+      summaryData.push(['Department', 'Count', 'Percentage']);
+      for (const [department, count] of result.byDepartment.entries()) {
+        const pct = result.totalExits > 0
+          ? ((count / result.totalExits) * 100).toFixed(1) + '%'
+          : '0.0%';
+        summaryData.push([department, count, pct]);
+      }
+    }
 
     const summarySheet = XLSX.utils.aoa_to_sheet(summaryData);
     summarySheet['!cols'] = [{ wch: 28 }, { wch: 18 }, { wch: 18 }, { wch: 18 }, { wch: 18 }, { wch: 18 }, { wch: 10 }];
@@ -330,6 +342,18 @@ window.Exporter = (() => {
     }
 
     addPageNumber(2);
+
+    // ── Page — Attrition by Department ──────────────────────────────────────
+    if (chartImages.department) {
+      doc.addPage();
+      drawHeaderBar();
+
+      const deptY = 25;
+      sectionTitle('ATTRITION BY DEPARTMENT', deptY - 4);
+      doc.addImage(chartImages.department, 'PNG', margin, deptY, contentW, pageH - deptY - margin);
+
+      addPageNumber(doc.internal.getNumberOfPages());
+    }
 
     // ── Page 3 — Monthly Headcount ─────────────────────────────────────────
     if (result.monthlyHeadcount && result.monthlyHeadcount.length > 0) {

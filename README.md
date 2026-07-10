@@ -12,6 +12,7 @@ A client-side web application that reads employee data from an Excel file, gener
   - Total attrition per year, stacked by exit reason
   - Monthly attrition trend
   - Reason breakdown (doughnut chart)
+  - Attrition by department (horizontal bar chart, top 10 + "Other")
 - **Monthly Headcount Analysis** — redesigned card-based view for HR managers:
   - At-a-glance period KPI bar (Period Start, Total Hired, Total Exits, Period End, Avg Attrition Rate)
   - Per-month cards showing end-of-month headcount, net change direction (▲/▼), hired vs. departed breakdown, and colour-coded attrition rate badge
@@ -189,7 +190,7 @@ Use the **Year** and **Month** filter pills to narrow the view. The period KPI b
 
 | Sheet | Contents |
 |---|---|
-| Summary | Overview metrics, attrition by year & reason, monthly headcount analysis (Beginning Count, Employees Added, Departures, Ending Count, Attrition Rate), reason breakdown |
+| Summary | Overview metrics, attrition by year & reason, monthly headcount analysis (Beginning Count, Employees Added, Departures, Ending Count, Attrition Rate), reason breakdown, department breakdown |
 | Raw Data | One row per employee: Name, Department, Date Hired, Exit Date, Reason, Remarks, Year, Month |
 
 ### PDF (landscape A4)
@@ -198,8 +199,9 @@ Use the **Year** and **Month** filter pills to narrow the view. The period KPI b
 |---|---|
 | 1 | Header, stat cards (Total Exits, Peak Month, Avg Rate), Attrition by Year bar chart |
 | 2 | Monthly trend line chart, Reason breakdown doughnut, Yearly summary table |
-| 3 | Monthly Headcount Analysis table (Beginning Count, Employees Added, Departures, Ending Count, Attrition Rate) |
-| 4+ | Employee exit records table (auto-paginated) |
+| 3 | Attrition by Department bar chart |
+| 4 | Monthly Headcount Analysis table (Beginning Count, Employees Added, Departures, Ending Count, Attrition Rate) |
+| 5+ | Employee exit records table (auto-paginated) |
 
 ---
 
