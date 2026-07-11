@@ -121,7 +121,7 @@
 
   // ── File handling ─────────────────────────────────────────────────────────
   async function handleFileSelect(file) {
-    if (!/\.(xlsx|xls)$/i.test(file.name)) {
+    if (!Parser.isExcelFilename(file.name)) {
       showToast('Please upload an Excel file (.xlsx or .xls)', 'error');
       return;
     }

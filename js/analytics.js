@@ -25,25 +25,15 @@ window.Analytics = (() => {
   }
 
   function compute(records) {
-    const totalExits = records.length;
+    // "Exits" are records with a valid exit date — records the user included
+    // only to unlock Monthly Headcount Analysis (active employees, no exit
+    // date) must never be counted as an exit or a "reason".
+    const timed = records.filter(r => r.yearMonth !== null);
+    const totalExits = timed.length;
 
-    if (totalExits === 0) {
-      return {
-        totalExits: 0,
-        peakMonth: { label: '—', count: 0, pct: '0.0' },
-        avgAttritionRate: { value: 0, isRate: false },
-        byYearByReason: new Map(),
-        byYearMonth: [],
-        monthlyHeadcount: [],
-        byReason: new Map(),
-        years: [],
-        reasons: [],
-      };
-    }
-
-    // ── byReason (all records, regardless of date) ──────────────────────────
+    // ── byReason (departed records only) ─────────────────────────────────
     const byReason = new Map();
-    for (const r of records) {
+    for (const r of timed) {
       byReason.set(r.reason, (byReason.get(r.reason) || 0) + 1);
     }
 
@@ -53,9 +43,6 @@ window.Analytics = (() => {
     );
 
     const reasons = [...sortedByReason.keys()];
-
-    // ── timed records only ──────────────────────────────────────────────────
-    const timed = records.filter(r => r.yearMonth !== null);
 
     // ── byYearByReason ──────────────────────────────────────────────────────
     const byYearByReason = new Map();
@@ -127,6 +114,16 @@ window.Analytics = (() => {
     const hiredRecords = records.filter(r => r.dateHired !== null);
     const hasHireData  = hiredRecords.length > 0;
 
+    // Departures within the hired population — kept separate from
+    // rawMonthCounts (all departures, incl. those with no Date Hired) so the
+    // attrition-rate numerator always matches the beginCount/endCount
+    // denominator population below.
+    const rawHiredDepartureCounts = new Map();
+    for (const r of hiredRecords) {
+      if (r.yearMonth === null) continue;
+      rawHiredDepartureCounts.set(r.yearMonth, (rawHiredDepartureCounts.get(r.yearMonth) || 0) + 1);
+    }
+
     if (combinedYMs.size > 0) {
       const sortedCombined = [...combinedYMs].sort();
       const minCombined    = sortedCombined[0];
@@ -139,7 +136,9 @@ window.Analytics = (() => {
         const firstDay = new Date(y, m - 1, 1);
         const lastDay  = new Date(y, m, 0, 23, 59, 59, 999);
 
-        const departures = rawMonthCounts.get(cur) || 0;
+        const departures = hasHireData
+          ? (rawHiredDepartureCounts.get(cur) || 0)
+          : (rawMonthCounts.get(cur) || 0);
         const added      = rawHireCounts.get(cur)  || 0;
 
         let beginCount = null;
