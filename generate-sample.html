@@ -20,7 +20,7 @@
 <body>
   <div class="card">
     <h1>Generate Sample Data</h1>
-    <p>Creates <strong>assets/sample-data.xlsx</strong> with 60 realistic employee exit records spanning 2021–2024.</p>
+    <p>Creates <strong>assets/sample-data.xlsx</strong> with 65 realistic employee records (50 departed, 15 still active) spanning 2021–2024, including Date Hired so the Monthly Headcount Analysis populates immediately.</p>
     <button id="btn">Download sample-data.xlsx</button>
     <p class="note">Open this file once to download the sample, then use it in the main app.</p>
   </div>
@@ -35,22 +35,41 @@
 
       function rnd(arr) { return arr[Math.floor(Math.random() * arr.length)]; }
       function pad(n) { return String(n).padStart(2, '0'); }
+      function ymd(year, month, day) { return `${year}-${pad(month)}-${pad(day)}`; }
 
-      const rows = [['Name','Department','Exit Date','Reason']];
+      const rows = [['Name','Department','Date Hired','Exit Date','Reason']];
 
-      for (let i = 0; i < 60; i++) {
+      // Departed employees — hired 3-30 months before their exit date.
+      for (let i = 0; i < 50; i++) {
         const name  = `${rnd(FIRST_NAMES)} ${rnd(LAST_NAMES)}`;
         const dept  = rnd(DEPARTMENTS);
         const year  = 2021 + Math.floor(Math.random() * 4);   // 2021-2024
         const month = 1   + Math.floor(Math.random() * 12);
         const day   = 1   + Math.floor(Math.random() * 28);
-        const date  = `${year}-${pad(month)}-${pad(day)}`;
+        const exitDate = ymd(year, month, day);
+
+        const tenureMonths = 3 + Math.floor(Math.random() * 27);
+        const hireDateObj  = new Date(year, month - 1, day);
+        hireDateObj.setMonth(hireDateObj.getMonth() - tenureMonths);
+        const hireDate = ymd(hireDateObj.getFullYear(), hireDateObj.getMonth() + 1, hireDateObj.getDate());
+
         const reason = rnd(REASONS);
-        rows.push([name, dept, date, reason]);
+        rows.push([name, dept, hireDate, exitDate, reason]);
+      }
+
+      // Active employees — Date Hired only, Exit Date and Reason left blank.
+      for (let i = 0; i < 15; i++) {
+        const name  = `${rnd(FIRST_NAMES)} ${rnd(LAST_NAMES)}`;
+        const dept  = rnd(DEPARTMENTS);
+        const year  = 2021 + Math.floor(Math.random() * 4);
+        const month = 1   + Math.floor(Math.random() * 12);
+        const day   = 1   + Math.floor(Math.random() * 28);
+        const hireDate = ymd(year, month, day);
+        rows.push([name, dept, hireDate, '', '']);
       }
 
       const ws = XLSX.utils.aoa_to_sheet(rows);
-      ws['!cols'] = [{ wch: 24 }, { wch: 18 }, { wch: 14 }, { wch: 20 }];
+      ws['!cols'] = [{ wch: 24 }, { wch: 18 }, { wch: 14 }, { wch: 14 }, { wch: 20 }];
 
       const wb = XLSX.utils.book_new();
       XLSX.utils.book_append_sheet(wb, ws, 'Employee Exits');

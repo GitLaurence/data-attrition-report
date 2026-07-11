@@ -53,6 +53,11 @@ window.Parser = (() => {
   const MIN_YEAR = 1970;
   const MAX_YEAR = new Date().getFullYear() + 2;
 
+  const EXCEL_FILENAME_RE = /\.(xlsx|xls)$/i;
+  function isExcelFilename(name) {
+    return EXCEL_FILENAME_RE.test(name);
+  }
+
   function normalizeReason(raw) {
     if (!raw) return 'Other';
     const key = String(raw).toLowerCase().trim();
@@ -147,7 +152,7 @@ window.Parser = (() => {
 
   function parse(file) {
     return new Promise((resolve, reject) => {
-      if (!/\.(xlsx|xls)$/i.test(file.name)) {
+      if (!isExcelFilename(file.name)) {
         reject(new Error('Please upload an Excel file (.xlsx or .xls).'));
         return;
       }
@@ -203,8 +208,8 @@ window.Parser = (() => {
 
             const records  = [];
             const warnings = [];
-            let skippedDateCount  = 0;
-            let skippedEmptyCount = 0;
+            let unreadableDateCount = 0;
+            let hireAfterExitCount  = 0;
 
             for (let i = 1; i < allRows.length; i++) {
               const row = allRows[i];
@@ -216,12 +221,19 @@ window.Parser = (() => {
               const dateVal = String(row[colMap.exitDateIdx] || '').trim();
 
               if (!nameVal && !dateVal) {
-                skippedEmptyCount++;
                 continue;
               }
 
               const record = buildRecord(row, colMap);
-              if (!record.exitDate) skippedDateCount++;
+
+              // Blank Exit Date is expected for active employees — only flag
+              // rows that had a value we failed to parse.
+              if (!record.exitDate && dateVal) unreadableDateCount++;
+
+              if (record.dateHired && record.exitDate && record.dateHired > record.exitDate) {
+                hireAfterExitCount++;
+              }
+
               records.push(record);
             }
 
@@ -230,9 +242,15 @@ window.Parser = (() => {
               return;
             }
 
-            if (skippedDateCount > 0) {
+            if (unreadableDateCount > 0) {
               warnings.push(
-                `${skippedDateCount} row(s) had unreadable Exit Date values and will be excluded from time-based charts.`
+                `${unreadableDateCount} row(s) had unreadable Exit Date values and will be excluded from time-based charts.`
+              );
+            }
+
+            if (hireAfterExitCount > 0) {
+              warnings.push(
+                `${hireAfterExitCount} row(s) have a Date Hired after their Exit Date — check these for typos.`
               );
             }
 
@@ -255,6 +273,6 @@ window.Parser = (() => {
     });
   }
 
-  return { parse };
+  return { parse, isExcelFilename };
 
 })();
