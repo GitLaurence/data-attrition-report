@@ -208,8 +208,10 @@ window.Parser = (() => {
 
             const records  = [];
             const warnings = [];
-            let unreadableDateCount = 0;
-            let hireAfterExitCount  = 0;
+            let unreadableDateCount   = 0;
+            let hireAfterExitCount    = 0;
+            let hiredCount            = 0;
+            let exitWithoutHireCount  = 0;
 
             for (let i = 1; i < allRows.length; i++) {
               const row = allRows[i];
@@ -234,6 +236,9 @@ window.Parser = (() => {
                 hireAfterExitCount++;
               }
 
+              if (record.dateHired) hiredCount++;
+              if (record.exitDate && !record.dateHired) exitWithoutHireCount++;
+
               records.push(record);
             }
 
@@ -251,6 +256,17 @@ window.Parser = (() => {
             if (hireAfterExitCount > 0) {
               warnings.push(
                 `${hireAfterExitCount} row(s) have a Date Hired after their Exit Date — check these for typos.`
+              );
+            }
+
+            // Monthly Headcount Analysis derives beginCount/endCount from the
+            // hired population only, so its departures figure quietly omits
+            // any exit lacking a Date Hired — flag it before that's mistaken
+            // for a mismatch with the Total Exits stat card.
+            if (colMap.dateHiredIdx !== -1 && hiredCount > 0 && exitWithoutHireCount > 0) {
+              warnings.push(
+                `${exitWithoutHireCount} exit(s) are missing a Date Hired and will be left out of the ` +
+                `Monthly Headcount Analysis (its departures and attrition rate only cover employees with a known hire date).`
               );
             }
 
