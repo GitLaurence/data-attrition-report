@@ -123,6 +123,23 @@ window.Parser = (() => {
     return (y >= MIN_YEAR && y <= MAX_YEAR) ? d : null;
   }
 
+  // Counts records that share the same Name + Exit Date — a common signature
+  // of accidentally pasting/importing the same row twice. Records without a
+  // name or exit date (e.g. active employees) are excluded to avoid false
+  // positives from unrelated blank rows.
+  function countDuplicates(records) {
+    const seen = new Map();
+    let duplicates = 0;
+    for (const r of records) {
+      if (!r.exitDate || r.name === 'Unknown') continue;
+      const key = `${r.name.toLowerCase()}|${r.yearMonth}|${r.exitDate.getDate()}`;
+      const count = (seen.get(key) || 0) + 1;
+      seen.set(key, count);
+      if (count > 1) duplicates++;
+    }
+    return duplicates;
+  }
+
   function buildRecord(row, colMap) {
     let name;
     if (colMap.splitName) {
@@ -258,6 +275,13 @@ window.Parser = (() => {
             if (emptyNameCount > records.length * 0.1) {
               warnings.push(
                 `${emptyNameCount} row(s) have a blank Name field — this may indicate merged cells.`
+              );
+            }
+
+            const duplicateCount = countDuplicates(records);
+            if (duplicateCount > 0) {
+              warnings.push(
+                `${duplicateCount} duplicate row(s) detected (same Name and Exit Date) — check for accidental double entry.`
               );
             }
 

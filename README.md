@@ -62,7 +62,7 @@ To unlock the full **Monthly Headcount Analysis** (Beginning Count, Ending Count
 
 If the file contains only departed employees, the Beginning/Ending Count and Attrition Rate columns will show `—`.
 
-The app flags likely data-quality issues after upload (via a toast), without rejecting the file: unreadable `Exit Date` values, and rows where `Date Hired` falls after `Exit Date`.
+The app flags likely data-quality issues after upload (via a toast), without rejecting the file: unreadable `Exit Date` values, rows where `Date Hired` falls after `Exit Date`, and duplicate rows sharing the same Name and Exit Date.
 
 ### Accepted Reason Values
 
