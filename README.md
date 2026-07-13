@@ -118,6 +118,11 @@ data-attrition-report/
 │   ├── analytics.js        # Attrition calculations and aggregations
 │   ├── charts.js           # Chart.js chart rendering
 │   └── exporter.js         # Excel and PDF export logic
+├── tests/
+│   ├── helpers.js          # Loads window-scoped modules into plain Node for testing
+│   ├── parser.test.js      # Column parsing, reason normalization, date handling
+│   └── analytics.test.js   # Attrition/headcount aggregation logic
+├── package.json            # `npm test` script only — the app itself needs no build step
 └── README.md
 ```
 
@@ -182,6 +187,16 @@ Use the **Year** and **Month** filter pills to narrow the view. The period KPI b
 5. Click **Export Excel** or **Export PDF** to download the report
 
 > No installation, no server, no build step required.
+
+---
+
+## Running Tests
+
+The parsing (`js/parser.js`) and aggregation (`js/analytics.js`) logic is covered by a `node:test` suite that runs directly under Node — no dependencies to install:
+
+```
+npm test
+```
 
 ---
 

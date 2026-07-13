@@ -1,0 +1,9 @@
+{
+  "name": "data-attrition-report",
+  "private": true,
+  "version": "1.0.0",
+  "description": "Client-side employee attrition report generator (no build step required to run the app — this file only wires up the test suite).",
+  "scripts": {
+    "test": "node --test"
+  }
+}

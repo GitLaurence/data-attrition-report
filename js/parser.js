@@ -273,6 +273,6 @@ window.Parser = (() => {
     });
   }
 
-  return { parse, isExcelFilename };
+  return { parse, isExcelFilename, normalizeReason, parseDate };
 
 })();
