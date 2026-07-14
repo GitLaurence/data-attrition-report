@@ -243,13 +243,13 @@ window.Exporter = (() => {
       });
     }
 
-    function sectionTitle(text, y) {
+    function sectionTitle(text, y, x = margin, width = contentW) {
       doc.setFontSize(9);
       doc.setFont('helvetica', 'bold');
       doc.setTextColor(...NAVY);
-      doc.text(text, margin, y);
+      doc.text(text, x, y);
       doc.setDrawColor(...BORDER);
-      doc.line(margin, y + 2, pageW - margin, y + 2);
+      doc.line(x, y + 2, x + width, y + 2);
     }
 
     // ── Page 1 ─────────────────────────────────────────────────────────────
@@ -274,7 +274,7 @@ window.Exporter = (() => {
     drawHeaderBar();
 
     const lineY = 25;
-    sectionTitle('MONTHLY ATTRITION TREND', lineY - 4);
+    sectionTitle('MONTHLY ATTRITION TREND', lineY - 4, margin, contentW * 0.62 - 5);
 
     if (chartImages.line) {
       doc.addImage(chartImages.line, 'PNG', margin, lineY, contentW * 0.62, 80);
@@ -285,7 +285,7 @@ window.Exporter = (() => {
     }
 
     if (chartImages.doughnut) {
-      sectionTitle('REASON BREAKDOWN', lineY - 4);
+      sectionTitle('REASON BREAKDOWN', lineY - 4, margin + contentW * 0.65, contentW * 0.35);
       doc.addImage(
         chartImages.doughnut, 'PNG',
         margin + contentW * 0.65,
